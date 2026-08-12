@@ -82,55 +82,92 @@ python app.py
 
 ---
 
-## Деплой на Render (через интернет)
+## Деплой в интернет (бесплатно: Neon + Render)
 
-> ⚠️ **Важно про бесплатный тариф Render:** бесплатный PostgreSQL **удаляется
-> через 30 дней** после создания. Для реальной работы апгрейдните базу до
-> Starter (~$6/мес) — она не удаляется. Web service можно оставить бесплатным
-> (он «засыпает» через 15 мин неактивности, первый запрос после сна ~50 сек).
+Архитектура: **база данных на Neon** (бесплатно навсегда, не удаляется) +
+**приложение на Render** (бесплатный web service). Общая стоимость: **$0**.
 
-### Вариант A — через GitHub (рекомендуется)
-1. Загрузите проект на GitHub.
-2. На <https://render.com> → **New → Blueprint** → выберите репозиторий.
-   Render сам прочитает `webapp/render.yaml` и создаст БД + web service.
-3. После первого деплоя откройте **Shell** веб-сервиса и создайте пользователя:
-   ```bash
-   flask --app app.py create-user admin mypassword --display "Admin"
+> ⚠️ Почему не Render для БД: бесплатный PostgreSQL на Render **удаляется
+> через 30 дней**. Neon же даёт постоянный free tier (0.5 ГБ — для учёта
+> товаров хватит надолго). Приложение на Render бесплатное, но «засыпает»
+> через 15 мин неактивности (первый запрос после сна ~50 сек).
+
+### Шаг 1. Создать базу данных на Neon
+1. Зарегистрируйтесь на <https://neon.tech> (через GitHub или email).
+2. **Create Project** → регион `AWS EU Central` (или ближайший).
+3. Выберите **PostgreSQL 16** (или 15).
+4. После создания откройте **Dashboard** → скопируйте **Connection string** —
+   она выглядит так:
    ```
-4. Откройте URL вида `https://inventory-orders-xxxx.onrender.com/login`.
+   postgresql://user:password@ep-xxxxx.eu-central-1.aws.neon.tech/neondb?sslmode=require
+   ```
+   **Важно:** оставьте `?sslmode=require` в конце — Neon требует SSL.
 
-### Вариант B — вручную
-1. **New + → PostgreSQL** (free), запомните `DATABASE_URL`.
-2. **New + → Web Service** → выберите репозиторий, **Root Directory** = `webapp`,
+### Шаг 2. Создать таблицы в БД (один раз)
+Локально или через **SQL Editor** на Neon вставьте содержимое `webapp/schema.sql`
+(весь файл целиком) и выполните. Либо локально:
+```bash
+set DATABASE_URL=<ваша строка из Neon>   # подставьте свою
+flask --app app.py init-db
+```
+
+### Шаг 3. Задеплоить приложение на Render
+**Вариант A — через Blueprint (проще):**
+1. На <https://render.com> → **New → Blueprint** → выберите репозиторий `stock`.
+2. Render прочитает `webapp/render.yaml` и создаст web service.
+3. В **Dashboard → ваш сервис → Environment** добавьте переменную:
+   - `DATABASE_URL` = ваша строка подключения из Neon
+   (SECRET_KEY Render сгенерирует сам.)
+4. Render задеплоит автоматически. URL: `https://stock-xxxx.onrender.com`.
+
+**Вариант B — вручную (Web Service):**
+1. **New + → Web Service** → репозиторий `stock`, **Root Directory** = `webapp`,
    **Build** = `pip install -r requirements.txt`,
    **Start** = `gunicorn app:app --workers 1 --threads 4 --timeout 60`.
-3. В **Environment** добавьте: `DATABASE_URL` (из БД), `SECRET_KEY` (сгенерируйте),
-   `FLASK_APP=app.py`.
-4. После деплоя → **Shell** → `flask --app app.py create-user admin пароль`.
+2. В **Environment** добавьте:
+   - `DATABASE_URL` = строка из Neon
+   - `SECRET_KEY` = случайная строка (например, `python -c "import secrets;print(secrets.token_hex(32))"`)
+   - `FLASK_APP` = `app.py`
+   - `PYTHON_VERSION` = `3.11.9`
+
+### Шаг 4. Создать первого пользователя
+После деплоя откройте **Shell** веб-сервиса на Render и выполните:
+```bash
+flask --app app.py create-user admin вашпароль --display "Admin"
+```
+Теперь можно войти на `https://stock-xxxx.onrender.com` как `admin`.
 
 ### Переменные окружения
 | Переменная | Назначение |
 |---|---|
-| `DATABASE_URL` | строка подключения PostgreSQL (на Render подставляется автоматически) |
-| `SECRET_KEY` | ключ для подписи сессий (сгенерируйте случайный) |
+| `DATABASE_URL` | строка подключения **Neon** (вставляете вручную) |
+| `SECRET_KEY` | случайная строка (Render может сгенерировать) |
 | `FLASK_APP` | `app.py` |
 | `PYTHON_VERSION` | `3.11.9` |
+
+### Если «засыпание» Render мешает
+Бесплатный web service Render засыпает через 15 мин неактивности — первый
+запрос после сна идёт ~50 сек. Если это мешает, апгрейдните web service до
+Starter ($7/мес, не засыпает). БД на Neon остаётся бесплатной.
 
 ---
 
 ## Создание новых пользователей
-Через Shell веб-сервиса (или локально):
+Через Shell веб-сервиса на Render (или локально):
 ```bash
 flask --app app.py create-user ivan secretpass --display "Иван"
 ```
 
 ## Бэкап данных
-На Render используйте функцию **Download dump** в разделе базы данных.
-Локально — `pg_dump inventory > backup.sql`.
+- **Neon:** в Dashboard → ваш проект → **Backup & Restore**, либо SQL Editor
+  для экспорта. Neon хранит историю изменений (point-in-time restore) на free tier.
+- Локально: `pg_dump "<DATABASE_URL>" > backup.sql`.
 
 ## Резюме для не-технического пользователя
-Чтобы запустить в интернете, вам (или разработчику) нужно:
-1. Положить код на GitHub.
-2. На Render создать сервис из этого репозитория (БД создастся автоматически).
-3. Создать логин/пароль командой.
-4. Раздать команде URL + логин/пароль.
+Чтобы запустить в интернете бесплатно:
+1. Создайте БД на Neon (бесплатно) — скопируйте строку подключения.
+2. Положите код на GitHub (уже сделано).
+3. На Render создайте web service из репозитория, вставьте строку Neon как
+   `DATABASE_URL`.
+4. Создайте логин/пароль командой через Shell.
+5. Раздайте команде URL + логин/пароль.
