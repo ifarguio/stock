@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% set active = 'inventory' %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <h4 class="mb-3 fw-bold">{{ tr('dlg.edit_product') if product else tr('dlg.add_product') }}</h4>
+
+    <div class="card mb-3">
+      <div class="card-body">
+        <form method="post" enctype="multipart/form-data" id="product-form">
+          <div class="row g-3 mb-2">
+            <div class="col-md-4">
+              <label class="form-label">{{ tr('lbl.code') }}</label>
+              <input name="code" class="form-control" value="{{ product.code if product else '' }}" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">{{ tr('lbl.name') }}</label>
+              <input name="name" class="form-control" value="{{ product.name if product else '' }}" required>
+            </div>
+            <div class="col-md-2">
+              <label class="form-label">{{ tr('lbl.base_price') }}</label>
+              <input name="base_price" type="number" step="0.01" min="0" class="form-control" value="{{ '%.2f' % product.base_price if product else '0.00' }}">
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">{{ tr('lbl.image') }}</label>
+            <input type="file" name="image" accept="image/*" class="form-control">
+            {% if product and product.has_image %}
+              <div class="form-text">
+                <img src="{{ url_for('product_image', product_id=product.id) }}" class="thumb mt-2" alt="">
+                <div class="mt-1"><label class="small"><input type="checkbox" name="remove_image" value="1"> {{ tr('btn.delete') }} {{ tr('lbl.image').lower() }}</label></div>
+              </div>
+            {% endif %}
+          </div>
+
+          <hr class="my-3">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6 class="mb-0">{{ tr('sect.existing_variants') }}</h6>
+          </div>
+
+          <div id="variant-list">
+            {% for v in variants %}
+            <div class="row g-2 mb-2 variant-row">
+              <div class="col-5">
+                <input list="color-list" name="v_color" class="form-control form-control-sm" value="{{ v.color }}">
+              </div>
+              <div class="col-5">
+                <input list="size-list" name="v_size" class="form-control form-control-sm" value="{{ v.size }}">
+              </div>
+              <div class="col-2"><button type="button" class="btn btn-sm btn-outline-danger w-100" onclick="this.closest('.variant-row').remove()">{{ tr('btn.remove') }}</button></div>
+            </div>
+            {% else %}
+            <p class="text-muted small">{{ tr('info.no_variants') }}</p>
+            {% endfor %}
+          </div>
+          <button type="button" class="btn btn-sm btn-outline-primary" id="add-variant"><i class="bi bi-plus"></i> {{ tr('sect.add_variant') }}</button>
+
+          <datalist id="color-list">{% for c in colors %}<option value="{{ c }}">{% endfor %}</datalist>
+          <datalist id="size-list">{% for s in sizes %}<option value="{{ s }}">{% endfor %}</datalist>
+        </form>
+      </div>
+    </div>
+
+    <div class="action-bar d-flex justify-content-between">
+      <a href="{{ url_for('inventory') }}" class="btn btn-outline-secondary">{{ tr('btn.cancel') }}</a>
+      <button type="submit" form="product-form" class="btn btn-primary">{{ tr('btn.save') }}</button>
+    </div>
+  </div>
+</div>
+
+<script>
+document.getElementById('add-variant').addEventListener('click', function() {
+  const row = document.createElement('div');
+  row.className = 'row g-2 mb-2 variant-row';
+  row.innerHTML = `
+    <div class="col-5"><input list="color-list" name="v_color" class="form-control form-control-sm"></div>
+    <div class="col-5"><input list="size-list" name="v_size" class="form-control form-control-sm"></div>
+    <div class="col-2"><button type="button" class="btn btn-sm btn-outline-danger w-100" onclick="this.closest('.variant-row').remove()">{{ tr('btn.remove') }}</button></div>`;
+  document.getElementById('variant-list').appendChild(row);
+});
+</script>
+{% endblock %}

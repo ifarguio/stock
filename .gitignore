@@ -1,0 +1,65 @@
+# ============================================================
+# Python
+# ============================================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+venv/
+
+# ============================================================
+# Desktop app (Tkinter) build & runtime artifacts
+# ============================================================
+build/
+dist/
+*.spec.bak
+
+# Desktop executable / release bundle (regenerated on demand)
+Release/
+
+# ============================================================
+# Databases & user data (each user has their own)
+# ============================================================
+data/
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# Product photos uploaded by the user (not part of source)
+images/
+
+# ============================================================
+# Web app runtime
+# ============================================================
+# Local environment variables (contain secrets — never commit)
+.env
+.env.*
+!.env.example
+
+# ============================================================
+# OS / editor cruft
+# ============================================================
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+.zcode/
+*.swp
+
+# ============================================================
+# Temporary / test scratch files
+# ============================================================
+_smoke.py
+_smoke*.py
+_diag*.py
+_test*.py
+_imgdiag.py
+_pathcheck.py
+_master_test.py
+_visual.py
+_verify.py
+_winsize.py
+_exetest/

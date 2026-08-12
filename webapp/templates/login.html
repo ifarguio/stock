@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-5 col-lg-4">
+    <div class="card shadow-sm mt-5">
+      <div class="card-body p-4">
+        <h4 class="text-center mb-1 fw-bold">{{ tr('app.appbar') }}</h4>
+        <p class="text-center text-muted mb-4">{{ tr('login.title') }}</p>
+        <form method="post">
+          <div class="mb-3">
+            <label class="form-label">{{ tr('login.username') }}</label>
+            <input type="text" name="username" class="form-control" autofocus required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">{{ tr('login.password') }}</label>
+            <input type="password" name="password" class="form-control" required>
+          </div>
+          <button type="submit" class="btn btn-primary w-100">{{ tr('login.submit') }}</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,158 @@
+/* Custom styles on top of Bootstrap 5, mirroring the desktop app's palette. */
+:root {
+  --primary: #5b6cf2;
+  --primary-hover: #4754d6;
+  --appbar: #3d4eb3;
+  --success: #16a37b;
+  --warning: #e08a00;
+  --danger: #e25b5b;
+  --bg: #f4f6fa;
+  --surface: #ffffff;
+  --surface-alt: #f0f3f9;
+  --border: #e6eaf2;
+  --text: #1f2937;
+  --muted: #6b7280;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+
+/* App bar (deep indigo header). */
+.appbar.navbar-dark {
+  background: var(--appbar);
+  min-height: 68px;
+}
+.appbar .navbar-brand { font-size: 1.15rem; }
+.appbar-subtitle {
+  color: #c8d0f5;
+  font-size: 0.78rem;
+}
+
+/* Page navigation tabs. */
+.page-nav .nav-link {
+  border: none;
+  padding: 0.9rem 1.1rem;
+  color: var(--muted);
+  font-weight: 600;
+  border-bottom: 3px solid transparent;
+}
+.page-nav .nav-link.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+  background: transparent;
+}
+.page-nav .nav-link:hover { color: var(--primary); }
+
+/* Cards / surfaces. */
+.card {
+  border: 1px solid var(--border);
+  border-radius: 0.6rem;
+}
+.table > :not(caption) > * > * { padding: 0.7rem 0.85rem; }
+.table thead th {
+  background: var(--surface-alt);
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  border-bottom: 1px solid var(--border);
+}
+
+/* Buttons colour overrides. */
+.btn-primary {
+  --bs-btn-bg: var(--primary);
+  --bs-btn-border-color: var(--primary);
+  --bs-btn-hover-bg: var(--primary-hover);
+  --bs-btn-hover-border-color: var(--primary-hover);
+  --bs-btn-active-bg: var(--primary-hover);
+  font-weight: 600;
+}
+.btn-success {
+  --bs-btn-bg: var(--success);
+  --bs-btn-border-color: var(--success);
+  font-weight: 600;
+}
+.btn-danger {
+  --bs-btn-bg: var(--danger);
+  --bs-btn-border-color: var(--danger);
+}
+.btn-outline-secondary {
+  --bs-btn-color: var(--text);
+  --bs-btn-border-color: var(--border);
+}
+
+/* Status badges. */
+.status-new {
+  background: rgba(224, 138, 0, 0.15);
+  color: var(--warning);
+  padding: 0.25rem 0.6rem;
+  border-radius: 1rem;
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+.status-shipped {
+  background: rgba(22, 163, 123, 0.15);
+  color: var(--success);
+  padding: 0.25rem 0.6rem;
+  border-radius: 1rem;
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+/* Metric cards on the stats page. */
+.metric-card {
+  border: 1px solid var(--border);
+  border-radius: 0.6rem;
+  padding: 1.25rem 1.5rem;
+  background: var(--surface);
+}
+.metric-value {
+  font-size: 1.9rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+.metric-label {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+}
+
+/* Product thumbnail in tables. */
+.thumb {
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+  border-radius: 0.35rem;
+  border: 1px solid var(--border);
+  background: var(--surface-alt);
+}
+.thumb-lg {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 0.5rem;
+  border: 1px solid var(--border);
+  background: var(--surface-alt);
+}
+
+/* Sticky action bar (footer) on forms. */
+.action-bar {
+  position: sticky;
+  bottom: 0;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding: 0.85rem 1rem;
+  z-index: 10;
+}
+
+/* Filter bar. */
+.filter-bar {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.6rem;
+  padding: 0.85rem 1rem;
+}
