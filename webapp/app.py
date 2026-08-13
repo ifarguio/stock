@@ -39,6 +39,32 @@ def create_app() -> Flask:
     app = Flask(__name__)
     app.config.from_object(Config)
 
+    # ---- gzip compression ------------------------------------------------
+    # Compresses HTML/JSON responses (~3-5x smaller). Implemented as a tiny
+    # after_request hook so no extra dependency (Flask-Compress) is needed.
+    import gzip
+    import io as _io
+
+    @app.after_request
+    def _gzip_response(response):
+        accept = request.headers.get("Accept-Encoding", "")
+        if "gzip" not in accept.lower():
+            return response
+        ctype = response.content_type or ""
+        if not (ctype.startswith("text/") or "json" in ctype or "javascript" in ctype or "css" in ctype):
+            return response
+        data = response.get_data()
+        if len(data) < 512:
+            return response
+        buf = _io.BytesIO()
+        with gzip.GzipFile(fileobj=buf, mode="wb", compresslevel=6, mtime=0) as gz:
+            gz.write(data)
+        response.set_data(buf.getvalue())
+        response.headers["Content-Encoding"] = "gzip"
+        response.headers["Vary"] = "Accept-Encoding"
+        response.headers["Content-Length"] = len(response.get_data())
+        return response
+
     # ---- Template globals / filters ------------------------------------
     @app.context_processor
     def inject_globals():
