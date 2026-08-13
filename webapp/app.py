@@ -35,6 +35,39 @@ from config import Config
 import translations
 
 
+def _optimise_image(data: bytes, max_size: int = 1000, quality: int = 85) -> tuple[bytes, str]:
+    """Resize and compress an uploaded image before storing it.
+
+    Photos straight from a phone/camera can be 2-5 MB at 3000-4000px. We
+    cap the longest edge at ``max_size`` and re-encode as JPEG (quality 85),
+    which typically yields 50-150 KB — small enough to load fast even on a
+    slow Chinese connection, and crisp enough for the UI (which shows at
+    most ~120px). Returns ``(bytes, extension)``.
+    """
+
+    import io
+    from PIL import Image
+
+    img = Image.open(io.BytesIO(data))
+    # Drop alpha / palette modes so JPEG encoding works and looks right.
+    if img.mode in ("RGBA", "LA", "P"):
+        # Composite transparency onto white for a clean JPEG.
+        background = Image.new("RGB", img.size, (255, 255, 255))
+        if img.mode == "P":
+            img = img.convert("RGBA")
+        background.paste(img, mask=img.split()[-1] if img.mode in ("RGBA", "LA") else None)
+        img = background
+    elif img.mode != "RGB":
+        img = img.convert("RGB")
+
+    # Resize so the longest edge is at most max_size, preserving aspect ratio.
+    img.thumbnail((max_size, max_size), Image.LANCZOS)
+
+    buf = io.BytesIO()
+    img.save(buf, format="JPEG", quality=quality, optimize=True)
+    return buf.getvalue(), ".jpg"
+
+
 def create_app() -> Flask:
     app = Flask(__name__)
     app.config.from_object(Config)
@@ -190,13 +223,7 @@ def create_app() -> Flask:
         if upload and upload.filename:
             data = upload.read()
             if data:
-                from PIL import Image
-                import io
-                img = Image.open(io.BytesIO(data))
-                ext = ".jpg" if img.mode == "RGB" else ".png"
-                buf = io.BytesIO()
-                img.save(buf, format="JPEG" if ext == ".jpg" else "PNG", quality=88)
-                image_bytes, image_ext = buf.getvalue(), ext
+                image_bytes, image_ext = _optimise_image(data)
         elif remove:
             keep = False
 

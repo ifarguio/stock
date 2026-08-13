@@ -4,7 +4,8 @@
 <div class="card mb-3">
   <div class="card-body">
     <div class="d-flex gap-4 align-items-center">
-      <img src="{{ url_for('product_image', product_id=product.id) }}" class="thumb-lg" alt="">
+      <img src="{{ url_for('product_image', product_id=product.id) }}" class="thumb-lg" alt=""
+           style="cursor:zoom-in" data-bs-toggle="modal" data-bs-target="#imgModal">
       <div class="flex-grow-1">
         <h4 class="mb-1 fw-bold">{{ product.name }}</h4>
         <div class="text-muted">{{ tr('lbl.code') }}: {{ product.code }}</div>
@@ -105,4 +106,17 @@
 </div>
 
 <p class="mt-3"><a href="{{ url_for('inventory') }}">← {{ tr('tab.inventory') }}</a></p>
+
+{# Full-size image viewer (click the thumbnail to open). #}
+<div class="modal fade" id="imgModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content bg-transparent border-0">
+      <div class="modal-body p-0 text-center">
+        <img src="{{ url_for('product_image', product_id=product.id) }}"
+             class="img-fluid rounded shadow" alt=""
+             style="max-height:80vh; cursor:zoom-out" data-bs-dismiss="modal">
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}
