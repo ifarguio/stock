@@ -137,6 +137,9 @@ _STRINGS: dict[str, dict[str, str]] = {
         "col.units": "Units",
         "col.revenue": "Revenue",
 
+        "stats.title": "Statistics",
+        "stats.subtitle": "Sales performance based on shipped orders.",
+
         "metric.revenue": "Revenue",
         "metric.orders_shipped": "Orders Shipped",
         "metric.units_sold": "Units Sold",
@@ -284,6 +287,9 @@ _STRINGS: dict[str, dict[str, str]] = {
         "col.total": "总计",
         "col.units": "销量",
         "col.revenue": "营收",
+
+        "stats.title": "统计",
+        "stats.subtitle": "基于已发货订单的销售业绩。",
 
         "metric.revenue": "营收",
         "metric.orders_shipped": "已发货订单",

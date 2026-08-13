@@ -1,58 +1,102 @@
 {% extends "base.html" %}
 {% set active = 'stats' %}
 {% block content %}
-<h4 class="mb-1 fw-bold">{{ tr('stats.title') }}</h4>
-<p class="text-muted small mb-3">{{ tr('stats.subtitle') }}</p>
+<div class="d-flex justify-content-between align-items-end mb-3">
+  <div>
+    <h4 class="mb-0 fw-bold">{{ tr('stats.title') }}</h4>
+    <span class="text-muted small">{{ tr('stats.subtitle') }}</span>
+  </div>
+</div>
 
-<form method="get" class="filter-bar mb-3">
-  <div class="row g-2 align-items-end">
-    <div class="col-md-2">
-      <label class="form-label small text-muted mb-1">{{ tr('ord.filter_from') }}</label>
-      <input type="date" name="from" value="{{ start }}" class="form-control form-control-sm">
+<form method="get" id="stats-form">
+  <div class="filter-bar mb-3">
+    {# Quick period presets #}
+    <div class="d-flex flex-wrap gap-2 mb-2 align-items-center">
+      <span class="text-muted small fw-semibold me-1">{{ tr('lbl.period') }}:</span>
+      {% set today = 'now' | todatetime | strftime('%Y-%m-%d') if false else '' %}
+      <button type="button" class="btn btn-sm btn-outline-secondary period-preset" data-days="7">{{ tr('period.this_week') }}</button>
+      <button type="button" class="btn btn-sm btn-outline-secondary period-preset" data-days="30">{{ tr('period.this_month') }}</button>
+      <button type="button" class="btn btn-sm btn-outline-secondary period-preset" data-days="90">{{ tr('period.this_quarter') }}</button>
+      <button type="button" class="btn btn-sm btn-outline-secondary period-preset" data-days="365">{{ tr('period.custom') }}</button>
     </div>
-    <div class="col-md-2">
-      <label class="form-label small text-muted mb-1">{{ tr('ord.filter_to') }}</label>
-      <input type="date" name="to" value="{{ end }}" class="form-control form-control-sm">
+    <div class="row g-2 align-items-end">
+      <div class="col-md-2">
+        <label class="form-label small text-muted mb-1">{{ tr('ord.filter_from') }}</label>
+        <input type="date" name="from" id="from-date" value="{{ start }}" class="form-control form-control-sm">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label small text-muted mb-1">{{ tr('ord.filter_to') }}</label>
+        <input type="date" name="to" id="to-date" value="{{ end }}" class="form-control form-control-sm">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label small text-muted mb-1">{{ tr('lbl.product') }}</label>
+        <select name="product_id" class="form-select form-select-sm">
+          <option value="">{{ tr('filter.all') }}</option>
+          {% for p in products %}<option value="{{ p.id }}" {% if product_id==p.id %}selected{% endif %}>{{ p.code }} - {{ p.name }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label small text-muted mb-1">{{ tr('sect.trend') }}</label>
+        <select id="metric" class="form-select form-select-sm">
+          <option value="revenue">{{ tr('metric.revenue') }}</option>
+          <option value="orders">{{ tr('metric.orders_shipped') }}</option>
+          <option value="units">{{ tr('metric.units_sold') }}</option>
+        </select>
+      </div>
+      <div class="col-md-2"><button class="btn btn-sm btn-primary w-100">{{ tr('btn.apply') }}</button></div>
     </div>
-    <div class="col-md-4">
-      <label class="form-label small text-muted mb-1">{{ tr('lbl.product') }}</label>
-      <select name="product_id" class="form-select form-select-sm">
-        <option value="">{{ tr('filter.all') }}</option>
-        {% for p in products %}<option value="{{ p.id }}" {% if product_id==p.id %}selected{% endif %}>{{ p.code }} - {{ p.name }}</option>{% endfor %}
-      </select>
-    </div>
-    <div class="col-md-2">
-      <label class="form-label small text-muted mb-1">{{ tr('sect.trend') }}</label>
-      <select id="metric" class="form-select form-select-sm">
-        <option value="revenue">{{ tr('metric.revenue') }}</option>
-        <option value="orders">{{ tr('metric.orders_shipped') }}</option>
-        <option value="units">{{ tr('metric.units_sold') }}</option>
-      </select>
-    </div>
-    <div class="col-md-2"><button class="btn btn-sm btn-primary w-100">{{ tr('btn.apply') }}</button></div>
   </div>
 </form>
 
+{# Metric cards with icons #}
 <div class="row g-3 mb-3">
-  <div class="col-md-4"><div class="metric-card"><div class="metric-value text-primary">{{ '%.2f' % summary.revenue }}</div><div class="metric-label">{{ tr('metric.revenue') }}</div></div></div>
-  <div class="col-md-4"><div class="metric-card"><div class="metric-value" style="color:var(--success)">{{ summary.order_count }}</div><div class="metric-label">{{ tr('metric.orders_shipped') }}</div></div></div>
-  <div class="col-md-4"><div class="metric-card"><div class="metric-value" style="color:var(--warning)">{{ summary.units }}</div><div class="metric-label">{{ tr('metric.units_sold') }}</div></div></div>
+  <div class="col-md-4">
+    <div class="metric-card d-flex align-items-center">
+      <div class="metric-icon" style="background:rgba(91,108,242,.12);color:var(--primary)"><i class="bi bi-cash-stack"></i></div>
+      <div class="flex-grow-1">
+        <div class="metric-value" style="color:var(--primary)">{{ '%.2f' % summary.revenue }}</div>
+        <div class="metric-label">{{ tr('metric.revenue') }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="metric-card d-flex align-items-center">
+      <div class="metric-icon" style="background:rgba(22,163,123,.12);color:var(--success)"><i class="bi bi-truck"></i></div>
+      <div class="flex-grow-1">
+        <div class="metric-value" style="color:var(--success)">{{ summary.order_count }}</div>
+        <div class="metric-label">{{ tr('metric.orders_shipped') }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="metric-card d-flex align-items-center">
+      <div class="metric-icon" style="background:rgba(224,138,0,.12);color:var(--warning)"><i class="bi bi-box-seam"></i></div>
+      <div class="flex-grow-1">
+        <div class="metric-value" style="color:var(--warning)">{{ summary.units }}</div>
+        <div class="metric-label">{{ tr('metric.units_sold') }}</div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div class="card mb-3"><div class="card-body">
-  <h6 class="mb-3">{{ tr('sect.trend') }}</h6>
-  <canvas id="trend-chart" height="100"></canvas>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h6 class="mb-0">{{ tr('sect.trend') }}</h6>
+  </div>
+  <div style="position:relative; height:280px;">
+    <canvas id="trend-chart"></canvas>
+  </div>
 </div></div>
 
 <div class="card"><div class="card-body">
   <h6 class="mb-3">{{ tr('sect.top_products') }}</h6>
-  <table class="table table-sm mb-0">
+  <table class="table table-sm table-hover mb-0">
     <thead><tr><th>{{ tr('col.code') }}</th><th>{{ tr('col.product') }}</th><th class="text-end">{{ tr('col.units') }}</th><th class="text-end">{{ tr('col.revenue') }}</th></tr></thead>
     <tbody>
       {% for p in top %}
-      <tr><td>{{ p.code }}</td><td>{{ p.name }}</td><td class="text-end">{{ p.units }}</td><td class="text-end">{{ '%.2f' % p.revenue }}</td></tr>
+      <tr><td class="fw-semibold">{{ p.code }}</td><td>{{ p.name }}</td><td class="text-end">{{ p.units }}</td><td class="text-end fw-semibold">{{ '%.2f' % p.revenue }}</td></tr>
       {% else %}
-      <tr><td colspan="4" class="text-center text-muted">—</td></tr>
+      <tr><td colspan="4" class="text-center text-muted py-3">—</td></tr>
       {% endfor %}
     </tbody>
   </table>
@@ -60,11 +104,25 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="https://cdn.bootcdn.net/ajax/libs/Chart.js/4.4.3/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.5.0/chart.umd.min.js"></script>
 <script>
+// Period preset buttons: set the date range and submit.
+document.querySelectorAll('.period-preset').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const days = parseInt(btn.dataset.days, 10);
+    const to = new Date();
+    const from = new Date();
+    from.setDate(to.getDate() - days);
+    document.getElementById('from-date').value = from.toISOString().slice(0, 10);
+    document.getElementById('to-date').value = to.toISOString().slice(0, 10);
+    document.getElementById('stats-form').submit();
+  });
+});
+
 const ctx = document.getElementById('trend-chart');
 let chart = null;
 const COLORS = { revenue: '#5b6cf2', orders: '#16a37b', units: '#e08a00' };
+const LABELS = { revenue: '{{ tr("metric.revenue") }}', orders: '{{ tr("metric.orders_shipped") }}', units: '{{ tr("metric.units_sold") }}' };
 
 function loadChart(metric) {
   const params = new URLSearchParams({
@@ -80,16 +138,32 @@ function loadChart(metric) {
         data: {
           labels: data.labels,
           datasets: [{
-            label: metric,
+            label: LABELS[metric] || metric,
             data: data.values,
             borderColor: COLORS[metric],
             backgroundColor: COLORS[metric] + '22',
-            fill: true, tension: 0.3, pointRadius: 3,
+            fill: true,
+            tension: 0.35,
+            pointRadius: 3,
+            pointHoverRadius: 6,
+            borderWidth: 2,
           }],
         },
-        options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } } },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: true, position: 'top', labels: { usePointStyle: true, boxWidth: 8 } },
+            tooltip: { callbacks: { label: (c) => ' ' + c.parsed.y.toFixed(2) } },
+          },
+          scales: {
+            y: { beginAtZero: true, ticks: { callback: (v) => Number(v).toLocaleString() } },
+            x: { grid: { display: false } },
+          },
+        },
       });
-    });
+    })
+    .catch(err => console.error('chart load failed:', err));
 }
 document.getElementById('metric').addEventListener('change', e => loadChart(e.target.value));
 loadChart('revenue');
