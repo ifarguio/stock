@@ -82,32 +82,36 @@ python app.py
 
 ---
 
-## Деплой в интернет (бесплатно: Neon + Render)
+## Деплой в интернет (бесплатно: Supabase + Render)
 
-Архитектура: **база данных на Neon** (бесплатно навсегда, не удаляется) +
+Архитектура: **база данных на Supabase** (бесплатно навсегда, не удаляется) +
 **приложение на Render** (бесплатный web service). Общая стоимость: **$0**.
 
 > ⚠️ Почему не Render для БД: бесплатный PostgreSQL на Render **удаляется
-> через 30 дней**. Neon же даёт постоянный free tier (0.5 ГБ — для учёта
-> товаров хватит надолго). Приложение на Render бесплатное, но «засыпает»
-> через 15 мин неактивности (первый запрос после сна ~50 сек).
+> через 30 дней**. Supabase даёт постоянный free tier (500 МБ — для учёта
+> товаров хватит надолго, не удаляется). Приложение на Render бесплатное,
+> но «засыпает» через 15 мин неактивности (первый запрос после сна ~50 сек).
 
-### Шаг 1. Создать базу данных на Neon
-1. Зарегистрируйтесь на <https://neon.tech> (через GitHub или email).
-2. **Create Project** → регион `AWS EU Central` (или ближайший).
-3. Выберите **PostgreSQL 16** (или 15).
-4. После создания откройте **Dashboard** → скопируйте **Connection string** —
-   она выглядит так:
+### Шаг 1. Создать базу данных на Supabase
+1. Зарегистрируйтесь на <https://supabase.com> (через GitHub или email).
+2. **New Project** → имя (например `stock`), сгенерируйте пароль БД, регион
+   `Frankfurt` (или ближайший).
+3. Дождитесь создания (~2 мин).
+4. Откройте **Project Settings → Database → Connection string**. Вам нужна
+   строка **Connection pooling** (через пулер, порт `6543`) — она выглядит так:
    ```
-   postgresql://user:password@ep-xxxxx.eu-central-1.aws.neon.tech/neondb?sslmode=require
+   postgresql://postgres.[проект]:[пароль]@aws-0-[регион].pooler.supabase.com:6543/postgres
    ```
-   **Важно:** оставьте `?sslmode=require` в конце — Neon требует SSL.
+   Скопируйте её и **подставьте свой реальный пароль** вместо `[пароль]`.
 
 ### Шаг 2. Создать таблицы в БД (один раз)
-Локально или через **SQL Editor** на Neon вставьте содержимое `webapp/schema.sql`
-(весь файл целиком) и выполните. Либо локально:
+**Вариант A — через веб-интерфейс Supabase (проще):**
+1. Откройте **SQL Editor** в проекте Supabase.
+2. Скопируйте всё содержимое файла `webapp/schema.sql`, вставьте и нажмите **Run**.
+
+**Вариант B — локально:**
 ```bash
-set DATABASE_URL=<ваша строка из Neon>   # подставьте свою
+set DATABASE_URL=<ваша строка из Supabase>   # подставьте свою
 flask --app app.py init-db
 ```
 
@@ -116,7 +120,7 @@ flask --app app.py init-db
 1. На <https://render.com> → **New → Blueprint** → выберите репозиторий `stock`.
 2. Render прочитает `webapp/render.yaml` и создаст web service.
 3. В **Dashboard → ваш сервис → Environment** добавьте переменную:
-   - `DATABASE_URL` = ваша строка подключения из Neon
+   - `DATABASE_URL` = ваша строка подключения из Supabase (порт 6543)
    (SECRET_KEY Render сгенерирует сам.)
 4. Render задеплоит автоматически. URL: `https://stock-xxxx.onrender.com`.
 
@@ -125,7 +129,7 @@ flask --app app.py init-db
    **Build** = `pip install -r requirements.txt`,
    **Start** = `gunicorn app:app --workers 1 --threads 4 --timeout 60`.
 2. В **Environment** добавьте:
-   - `DATABASE_URL` = строка из Neon
+   - `DATABASE_URL` = строка из Supabase (порт 6543)
    - `SECRET_KEY` = случайная строка (например, `python -c "import secrets;print(secrets.token_hex(32))"`)
    - `FLASK_APP` = `app.py`
    - `PYTHON_VERSION` = `3.11.9`
@@ -140,7 +144,7 @@ flask --app app.py create-user admin вашпароль --display "Admin"
 ### Переменные окружения
 | Переменная | Назначение |
 |---|---|
-| `DATABASE_URL` | строка подключения **Neon** (вставляете вручную) |
+| `DATABASE_URL` | строка подключения **Supabase** (вставляете вручную) |
 | `SECRET_KEY` | случайная строка (Render может сгенерировать) |
 | `FLASK_APP` | `app.py` |
 | `PYTHON_VERSION` | `3.11.9` |
@@ -148,7 +152,7 @@ flask --app app.py create-user admin вашпароль --display "Admin"
 ### Если «засыпание» Render мешает
 Бесплатный web service Render засыпает через 15 мин неактивности — первый
 запрос после сна идёт ~50 сек. Если это мешает, апгрейдните web service до
-Starter ($7/мес, не засыпает). БД на Neon остаётся бесплатной.
+Starter ($7/мес, не засыпает). БД на Supabase остаётся бесплатной.
 
 ---
 
@@ -159,15 +163,15 @@ flask --app app.py create-user ivan secretpass --display "Иван"
 ```
 
 ## Бэкап данных
-- **Neon:** в Dashboard → ваш проект → **Backup & Restore**, либо SQL Editor
-  для экспорта. Neon хранит историю изменений (point-in-time restore) на free tier.
+- **Supabase:** Dashboard → ваш проект → **Database → Backups** (на free tier
+  есть point-in-time за последние 7 дней). Также можно выгрузить через SQL Editor.
 - Локально: `pg_dump "<DATABASE_URL>" > backup.sql`.
 
 ## Резюме для не-технического пользователя
 Чтобы запустить в интернете бесплатно:
-1. Создайте БД на Neon (бесплатно) — скопируйте строку подключения.
+1. Создайте БД на Supabase (бесплатно) — скопируйте connection string (порт 6543).
 2. Положите код на GitHub (уже сделано).
-3. На Render создайте web service из репозитория, вставьте строку Neon как
+3. На Render создайте web service из репозитория, вставьте строку Supabase как
    `DATABASE_URL`.
 4. Создайте логин/пароль командой через Shell.
 5. Раздайте команде URL + логин/пароль.

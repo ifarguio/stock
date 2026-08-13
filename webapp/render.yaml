@@ -1,11 +1,12 @@
 # Render Blueprint — deploy the web service only.
-# The PostgreSQL database lives on Neon (https://neon.tech) — its free tier
-# does NOT expire after 30 days, unlike Render's free database.
+# The PostgreSQL database lives on Supabase (https://supabase.com) — its free
+# tier does NOT expire, unlike Render's free database (which is deleted after
+# 30 days).
 #
-# See webapp/README.md for the full step-by-step (create the DB on Neon,
-# paste the connection string as DATABASE_URL here).
+# See webapp/README.md for the full step-by-step (create the DB on Supabase,
+# paste the connection string as DATABASE_URL in the Render dashboard).
 #
-# Cost: $0 (Neon free DB + Render free web service).
+# Cost: $0 (Supabase free DB + Render free web service).
 
 services:
   - type: web

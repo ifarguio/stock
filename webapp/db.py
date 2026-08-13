@@ -28,19 +28,26 @@ from config import Config
 
 
 def _connect():
-    """Open a new PostgreSQL connection configured for dict-like rows."""
+    """Open a new PostgreSQL connection configured for dict-like rows.
+
+    Works with any cloud PostgreSQL (Supabase, Neon, Render, Aiven, ...).
+    The connection string from DATABASE_URL is normalised so both
+    ``postgres://`` and ``postgresql://`` schemes are accepted, and a
+    connect timeout is set so the app never hangs on a dead DB.
+    """
 
     url = Config.DATABASE_URL
     if not url:
         raise RuntimeError(
             "DATABASE_URL is not set. Set it in your environment (.env file "
-            "locally, or link a Postgres database on Render)."
+            "locally, or as an environment variable on Render)."
         )
-    # Render sometimes prefixes the URL with 'postgres://' which psycopg2
-    # (newer versions) wants as 'postgresql://'. Normalise to be safe.
+    # Some providers prefix the URL with 'postgres://' which newer psycopg2
+    # wants as 'postgresql://'. Normalise to be safe.
     if url.startswith("postgres://"):
         url = "postgresql://" + url[len("postgres://"):]
-    conn = psycopg2.connect(url)
+
+    conn = psycopg2.connect(url, connect_timeout=10)
     conn.autocommit = False
     return conn
 
