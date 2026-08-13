@@ -505,6 +505,31 @@ def create_app() -> Flask:
     @app.route("/orders/<int:order_id>/ship", methods=["POST"])
     @login_required
     def order_ship(order_id: int):
+        order = repository.get_order(order_id)
+        if not order:
+            flash("Order not found.", "danger")
+            return redirect(url_for("orders"))
+        if order["status"] == "shipped":
+            flash(translations.tr("info.already_shipped_title"), "info")
+            return redirect(url_for("orders"))
+
+        # Check stock availability per item. Warn (don't block) if any item
+        # would go negative — the user already confirmed shipment.
+        items = repository.list_order_items(order_id)
+        shortages = []
+        for it in items:
+            available = repository.product_stock_total(it["product_id"])
+            if it["quantity"] > available:
+                shortages.append(
+                    f"{it['product_code']} {it['color']}/{it['size']}: "
+                    f"need {it['quantity']}, have {available}"
+                )
+        if shortages:
+            flash(
+                translations.tr("confirm.ship_shortage_msg") + " "
+                + "; ".join(shortages),
+                "warning",
+            )
         try:
             repository.ship_order(order_id)
             flash(translations.tr("status.shipped"), "success")

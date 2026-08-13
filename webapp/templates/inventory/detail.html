@@ -14,6 +14,15 @@
       <div class="text-end">
         <div class="metric-value text-primary">{{ stock_total }}</div>
         <div class="metric-label">{{ tr('detail.units_in_stock') }}</div>
+        <form method="post" action="{{ url_for('stock_adjust', product_id=product.id) }}"
+              class="d-inline-flex gap-1 align-items-center mt-2">
+          <input type="number" name="delta" class="form-control form-control-sm quick-stock-input"
+                 value="0" min="0" title="{{ tr('lbl.quantity') }} +/−">
+          <button type="submit" name="direction" value="in"
+                  class="btn btn-sm btn-success quick-stock-btn" title="+"><i class="bi bi-plus-lg"></i></button>
+          <button type="submit" name="direction" value="out"
+                  class="btn btn-sm btn-outline-danger quick-stock-btn" title="−"><i class="bi bi-dash-lg"></i></button>
+        </form>
       </div>
     </div>
     <div class="mt-3">

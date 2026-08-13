@@ -163,6 +163,7 @@ _STRINGS: dict[str, dict[str, str]] = {
         "confirm.delete_product_msg": "Delete this product and all its stock movements? This cannot be undone.",
         "confirm.delete_order_msg": "Delete this order?",
         "confirm.ship_msg": "Mark order #{order_id} as shipped? Stock will be reduced.",
+        "confirm.ship_shortage_msg": "Insufficient stock for some items:",
         "confirm.unship_msg": "Revert order #{order_id} back to New? Stock will be returned.",
     },
     "zh": {
@@ -314,6 +315,7 @@ _STRINGS: dict[str, dict[str, str]] = {
         "confirm.delete_product_msg": "删除此商品及其所有库存变动记录?此操作无法撤销。",
         "confirm.delete_order_msg": "删除此订单?",
         "confirm.ship_msg": "将订单 #{order_id} 标记为已发货?库存将减少。",
+        "confirm.ship_shortage_msg": "部分商品库存不足:",
         "confirm.unship_msg": "将订单 #{order_id} 恢复为新建?库存将返还。",
     },
 }
