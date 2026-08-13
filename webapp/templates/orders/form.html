@@ -44,7 +44,7 @@
             {% if order %}
               {% for it in items %}
               <tr>
-                <td>{% if it.has_image %}<img src="{{ url_for('product_image', product_id=it.product_id) }}" class="thumb" alt="">{% endif %}</td>
+                <td>{% if it.has_image %}<img src="{{ url_for('product_thumb', product_id=it.product_id) }}" class="thumb" alt="" loading="lazy">{% endif %}</td>
                 <td>{{ it.product_code }}</td><td>{{ it.product_name }}</td><td>{{ it.color }}</td><td>{{ it.size }}</td>
                 <td class="text-end">{{ it.quantity }}</td><td class="text-end">{{ '%.2f' % it.unit_price }}</td>
                 <td class="text-end fw-semibold">{{ '%.2f' % (it.quantity * it.unit_price) }}</td>

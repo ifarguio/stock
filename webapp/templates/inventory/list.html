@@ -59,7 +59,7 @@
       <tbody>
         {% for p in products %}
         <tr>
-          <td><img src="{{ url_for('product_image', product_id=p.id) }}" class="thumb" alt=""></td>
+          <td><img src="{{ url_for('product_thumb', product_id=p.id) }}" class="thumb" alt="" loading="lazy"></td>
           <td><a href="{{ url_for('product_detail', product_id=p.id) }}" class="text-decoration-none fw-semibold">{{ p.code }}</a></td>
           <td>{{ p.name }}</td>
           <td class="text-end">{{ '%.2f' % p.base_price }}</td>

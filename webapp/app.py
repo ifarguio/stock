@@ -35,37 +35,64 @@ from config import Config
 import translations
 
 
-def _optimise_image(data: bytes, max_size: int = 1000, quality: int = 85) -> tuple[bytes, str]:
-    """Resize and compress an uploaded image before storing it.
+def _to_rgb(img):
+    """Convert any PIL image to RGB, compositing transparency onto white."""
+    from PIL import Image
+    if img.mode in ("RGBA", "LA", "P"):
+        background = Image.new("RGB", img.size, (255, 255, 255))
+        if img.mode == "P":
+            img = img.convert("RGBA")
+        background.paste(img, mask=img.split()[-1] if img.mode in ("RGBA", "LA") else None)
+        return background
+    if img.mode != "RGB":
+        img = img.convert("RGB")
+    return img
 
-    Photos straight from a phone/camera can be 2-5 MB at 3000-4000px. We
-    cap the longest edge at ``max_size`` and re-encode as JPEG (quality 85),
-    which typically yields 50-150 KB — small enough to load fast even on a
-    slow Chinese connection, and crisp enough for the UI (which shows at
-    most ~120px). Returns ``(bytes, extension)``.
+
+def _optimise_image(data: bytes, max_size: int = 800, quality: int = 82) -> tuple[bytes, str]:
+    """Resize and compress an uploaded image before storing it (full version).
+
+    Caps the longest edge at ``max_size`` and re-encodes as JPEG. This is the
+    version served for the full-size lightbox viewer. Returns ``(bytes, ext)``.
     """
 
     import io
     from PIL import Image
 
-    img = Image.open(io.BytesIO(data))
-    # Drop alpha / palette modes so JPEG encoding works and looks right.
-    if img.mode in ("RGBA", "LA", "P"):
-        # Composite transparency onto white for a clean JPEG.
-        background = Image.new("RGB", img.size, (255, 255, 255))
-        if img.mode == "P":
-            img = img.convert("RGBA")
-        background.paste(img, mask=img.split()[-1] if img.mode in ("RGBA", "LA") else None)
-        img = background
-    elif img.mode != "RGB":
-        img = img.convert("RGB")
-
-    # Resize so the longest edge is at most max_size, preserving aspect ratio.
+    img = _to_rgb(Image.open(io.BytesIO(data)))
     img.thumbnail((max_size, max_size), Image.LANCZOS)
-
     buf = io.BytesIO()
     img.save(buf, format="JPEG", quality=quality, optimize=True)
     return buf.getvalue(), ".jpg"
+
+
+def _make_thumbnail(data: bytes, size: int = 160, quality: int = 70) -> bytes:
+    """Build a tiny square thumbnail (~3-5 KB) for use in lists/tables.
+
+    Used by the ``/product/<id>/thumb`` endpoint so lists never download the
+    full image. Result is cropped to a square (cover) at ``size`` px.
+    """
+
+    import io
+    from PIL import Image
+
+    img = _to_rgb(Image.open(io.BytesIO(data)))
+    # Center-crop to a square, then shrink — gives a clean cover thumbnail
+    # without distorted aspect ratios.
+    w, h = img.size
+    side = min(w, h)
+    left = (w - side) // 2
+    top = (h - side) // 2
+    img = img.crop((left, top, left + side, top + side))
+    img = img.resize((size, size), Image.LANCZOS)
+    buf = io.BytesIO()
+    img.save(buf, format="JPEG", quality=quality, optimize=True)
+    return buf.getvalue()
+
+
+# In-memory thumbnail cache: product_id -> bytes. Rebuilt lazily on first
+# access after a deploy; cheap because each thumbnail is only ~3-5 KB.
+_thumb_cache: dict[int, bytes] = {}
 
 
 def create_app() -> Flask:
@@ -135,15 +162,32 @@ def create_app() -> Flask:
     # ---- Product image serving (binary stored in the DB) ---------------
     @app.route("/product/<int:product_id>/image")
     def product_image(product_id: int):
+        """Full-size image — used only by the click-to-zoom lightbox."""
         img = repository.get_product_image(product_id)
         if not img:
-            # 1x1 transparent placeholder so <img> tags don't break.
             return Response(_PLACEHOLDER_PNG, mimetype="image/png")
-        product = repository.get_product(product_id)
-        ext = (product["image_ext"] if product else "") or ".png"
-        mime = {"jpg": "image/jpeg", "jpeg": "image/jpeg", "png": "image/png",
-                "gif": "image/gif", "webp": "image/webp"}.get(ext.lstrip("."), "image/png")
-        return Response(img, mimetype=mime)
+        return Response(img, mimetype="image/jpeg",
+                        headers={"Cache-Control": "public, max-age=86400"})
+
+    @app.route("/product/<int:product_id>/thumb")
+    def product_thumb(product_id: int):
+        """Tiny square thumbnail (~3-5 KB) for lists and tables.
+
+        Cached in memory per product id. Lists load this instead of the full
+        image, so a page with 50 products downloads ~200 KB instead of ~5 MB.
+        """
+        thumb = _thumb_cache.get(product_id)
+        if thumb is None:
+            img = repository.get_product_image(product_id)
+            if not img:
+                return Response(_PLACEHOLDER_PNG, mimetype="image/png")
+            try:
+                thumb = _make_thumbnail(img)
+            except Exception:
+                return Response(_PLACEHOLDER_PNG, mimetype="image/png")
+            _thumb_cache[product_id] = thumb
+        return Response(thumb, mimetype="image/jpeg",
+                        headers={"Cache-Control": "public, max-age=86400"})
 
     # ---- Inventory ------------------------------------------------------
     @app.route("/")
@@ -236,6 +280,8 @@ def create_app() -> Flask:
             repository.update_product(
                 product_id, code, name, price, image_bytes, image_ext, unique, keep
             )
+            # Invalidate the cached thumbnail so the new image shows up.
+            _thumb_cache.pop(product_id, None)
             flash("Product updated.", "success")
         return redirect(url_for("inventory"))
 
@@ -298,6 +344,7 @@ def create_app() -> Flask:
     def product_delete(product_id: int):
         try:
             repository.delete_product(product_id)
+            _thumb_cache.pop(product_id, None)
             flash("Product deleted.", "success")
         except Exception as exc:
             flash(f"Cannot delete: {exc}", "danger")
@@ -449,6 +496,44 @@ def create_app() -> Flask:
         """Create a login account."""
         uid = create_user(username, password, display)
         click.echo(f"Created user '{username}' (id={uid}).")
+
+    @app.cli.command("recompress-images")
+    def recompress_images_cmd():
+        """Re-compress every stored product image to the current size/quality.
+
+        Run this once after deploying newer image-optimisation settings, or to
+        shrink photos that were uploaded before compression was added.
+        """
+        rows = db.query("SELECT id FROM products WHERE image IS NOT NULL ORDER BY id")
+        if not rows:
+            click.echo("No product images to recompress.")
+            return
+        total_before = 0
+        total_after = 0
+        count = 0
+        for r in rows:
+            pid = r["id"]
+            raw = db.query_one("SELECT image FROM products WHERE id = %s", (pid,))["image"]
+            if not raw:
+                continue
+            before = len(raw)
+            new_bytes, _ = _optimise_image(raw)
+            after = len(new_bytes)
+            db.execute(
+                "UPDATE products SET image = %s, image_ext = '.jpg' WHERE id = %s",
+                (new_bytes, pid),
+            )
+            _thumb_cache.pop(pid, None)
+            total_before += before
+            total_after += after
+            count += 1
+            click.echo(f"  product #{pid}: {before:,} -> {after:,} bytes")
+        if count:
+            ratio = total_before / max(1, total_after)
+            click.echo(
+                f"\nRecompressed {count} image(s): "
+                f"{total_before:,} -> {total_after:,} bytes ({ratio:.1f}x smaller)."
+            )
 
     return app
 
