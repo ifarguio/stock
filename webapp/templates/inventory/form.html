@@ -43,10 +43,20 @@
             {% for v in variants %}
             <div class="row g-2 mb-2 variant-row">
               <div class="col-5">
-                <input list="color-list" name="v_color" class="form-control form-control-sm" value="{{ v.color }}">
+                <select name="v_color" class="form-select form-select-sm v-color">
+                  {% if v.color and v.color not in colors %}<option value="{{ v.color }}" selected>{{ v.color }}</option>{% endif %}
+                  {% for c in colors %}<option value="{{ c }}" {% if v.color==c %}selected{% endif %}>{{ c }}</option>{% endfor %}
+                  <option value="__new__">➕ {{ tr('sect.add_variant') }}…</option>
+                </select>
+                <input type="text" name="v_color_new" class="form-control form-control-sm v-new d-none mt-1" placeholder="{{ tr('hint.color_new') }}">
               </div>
               <div class="col-5">
-                <input list="size-list" name="v_size" class="form-control form-control-sm" value="{{ v.size }}">
+                <select name="v_size" class="form-select form-select-sm v-size">
+                  {% if v.size and v.size not in sizes %}<option value="{{ v.size }}" selected>{{ v.size }}</option>{% endif %}
+                  {% for s in sizes %}<option value="{{ s }}" {% if v.size==s %}selected{% endif %}>{{ s }}</option>{% endfor %}
+                  <option value="__new__">➕ {{ tr('sect.add_variant') }}…</option>
+                </select>
+                <input type="text" name="v_size_new" class="form-control form-control-sm v-new d-none mt-1" placeholder="{{ tr('hint.size_new') }}">
               </div>
               <div class="col-2"><button type="button" class="btn btn-sm btn-outline-danger w-100" onclick="this.closest('.variant-row').remove()">{{ tr('btn.remove') }}</button></div>
             </div>
@@ -55,9 +65,6 @@
             {% endfor %}
           </div>
           <button type="button" class="btn btn-sm btn-outline-primary" id="add-variant"><i class="bi bi-plus"></i> {{ tr('sect.add_variant') }}</button>
-
-          <datalist id="color-list">{% for c in colors %}<option value="{{ c }}">{% endfor %}</datalist>
-          <datalist id="size-list">{% for s in sizes %}<option value="{{ s }}">{% endfor %}</datalist>
         </form>
       </div>
     </div>
@@ -70,14 +77,68 @@
 </div>
 
 <script>
+// When a variant dropdown is switched to "➕ New…", reveal the free-text input.
+function bindVariantRow(row) {
+  row.querySelectorAll('select').forEach(sel => {
+    sel.addEventListener('change', () => {
+      const input = sel.parentElement.querySelector('.v-new');
+      if (sel.value === '__new__') {
+        input.classList.remove('d-none');
+        input.focus();
+      } else {
+        input.classList.add('d-none');
+        input.value = '';
+      }
+    });
+    // Trigger once on load so an existing "__new__" selection reveals the input.
+    if (sel.value === '__new__') {
+      sel.parentElement.querySelector('.v-new').classList.remove('d-none');
+    }
+  });
+}
+document.querySelectorAll('.variant-row').forEach(bindVariantRow);
+
+const COLORS = [{% for c in colors %}"{{ c }}",{% endfor %}];
+const SIZES = [{% for s in sizes %}"{{ s }}",{% endfor %}];
+
+function colorOptions(selected) {
+  return COLORS.map(c => `<option value="${c}" ${c===selected?'selected':''}>${c}</option>`).join('')
+    + `<option value="__new__">➕ {{ tr('sect.add_variant') }}…</option>`;
+}
+function sizeOptions(selected) {
+  return SIZES.map(s => `<option value="${s}" ${s===selected?'selected':''}>${s}</option>`).join('')
+    + `<option value="__new__">➕ {{ tr('sect.add_variant') }}…</option>`;
+}
+
 document.getElementById('add-variant').addEventListener('click', function() {
+  // Remove the empty-state hint if present.
+  const hint = document.querySelector('#variant-list > p.text-muted');
+  if (hint) hint.remove();
+
   const row = document.createElement('div');
   row.className = 'row g-2 mb-2 variant-row';
   row.innerHTML = `
-    <div class="col-5"><input list="color-list" name="v_color" class="form-control form-control-sm"></div>
-    <div class="col-5"><input list="size-list" name="v_size" class="form-control form-control-sm"></div>
+    <div class="col-5">
+      <select name="v_color" class="form-select form-select-sm v-color">${colorOptions(COLORS[0]||'')}</select>
+      <input type="text" name="v_color_new" class="form-control form-control-sm v-new d-none mt-1" placeholder="{{ tr('hint.color_new') }}">
+    </div>
+    <div class="col-5">
+      <select name="v_size" class="form-select form-select-sm v-size">${sizeOptions(SIZES[0]||'')}</select>
+      <input type="text" name="v_size_new" class="form-control form-control-sm v-new d-none mt-1" placeholder="{{ tr('hint.size_new') }}">
+    </div>
     <div class="col-2"><button type="button" class="btn btn-sm btn-outline-danger w-100" onclick="this.closest('.variant-row').remove()">{{ tr('btn.remove') }}</button></div>`;
   document.getElementById('variant-list').appendChild(row);
+  bindVariantRow(row);
+});
+
+// Before submit: if a dropdown is "__new__", replace its value with the typed one.
+document.getElementById('product-form').addEventListener('submit', () => {
+  document.querySelectorAll('.variant-row').forEach(row => {
+    const cs = row.querySelector('.v-color');
+    if (cs.value === '__new__') cs.value = row.querySelector('input[name="v_color_new"]').value;
+    const ss = row.querySelector('.v-size');
+    if (ss.value === '__new__') ss.value = row.querySelector('input[name="v_size_new"]').value;
+  });
 });
 </script>
 {% endblock %}

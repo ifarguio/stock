@@ -393,6 +393,39 @@ def create_app() -> Flask:
         )
         return redirect(url_for("product_detail", product_id=product_id))
 
+    @app.route("/inventory/<int:product_id>/adjust", methods=["POST"])
+    @login_required
+    def stock_adjust(product_id: int):
+        """Quick stock adjustment from the product list.
+
+        Positive delta + direction 'in'  -> stock_in (restock)
+        Positive delta + direction 'out' -> stock_out (remove)
+        Records the movement against the product's first variant (or empty
+        color/size if it has none), so the stock total changes immediately
+        without opening the detail page.
+        """
+        try:
+            delta = int(request.form.get("delta", "0") or 0)
+        except ValueError:
+            delta = 0
+        direction = request.form.get("direction", "in")
+        if delta == 0:
+            return redirect(url_for("inventory"))
+        # Pick a variant to attribute the movement to.
+        variants = repository.list_variants(product_id)
+        color = variants[0]["color"] if variants else ""
+        size = variants[0]["size"] if variants else ""
+        today = date.today().isoformat()
+        if direction == "out":
+            repository.add_stock_out(product_id, color, size, abs(delta), today,
+                                     "", "Quick adjust")
+        else:
+            product = repository.get_product(product_id) or {}
+            repository.add_stock_in(product_id, color, size, abs(delta),
+                                    float(product.get("base_price") or 0),
+                                    today, "Quick adjust")
+        return redirect(url_for("inventory"))
+
     @app.route("/inventory/<int:product_id>/delete", methods=["POST"])
     @login_required
     def product_delete(product_id: int):

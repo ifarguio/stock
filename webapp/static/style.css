@@ -342,3 +342,18 @@ a:focus-visible, button:focus-visible {
   outline-offset: 2px;
   border-radius: 0.3rem;
 }
+
+/* ============================================================
+   Quick stock adjustment (inline in the product list)
+   ============================================================ */
+.quick-stock { flex-wrap: nowrap; }
+.quick-stock-input {
+  width: 64px;
+  text-align: center;
+  padding-left: 0.3rem;
+  padding-right: 0.3rem;
+}
+.quick-stock-btn {
+  padding: 0.15rem 0.45rem;
+  line-height: 1;
+}
