@@ -3,6 +3,10 @@
 # tier does NOT expire, unlike Render's free database (which is deleted after
 # 30 days).
 #
+# This file MUST live in the REPOSITORY ROOT (not in webapp/) so Render's
+# Blueprint feature finds it automatically. The app code is under webapp/,
+# pointed to by rootDir below.
+#
 # See webapp/README.md for the full step-by-step (create the DB on Supabase,
 # paste the connection string as DATABASE_URL in the Render dashboard).
 #
@@ -20,12 +24,12 @@ services:
     healthCheckPath: /login
     autoDeploy: true
     envVars:
-      # SECRET_KEY: generate a random one, or let Render generate it.
+      # SECRET_KEY: Render generates this automatically.
       - key: SECRET_KEY
         generateValue: true
-      # DATABASE_URL: paste the Neon connection string here in the Render
+      # DATABASE_URL: paste the Supabase connection string here in the Render
       # dashboard (Dashboard > your service > Environment). It looks like:
-      #   postgresql://user:pass@ep-xxx.region.aws.neon.tech/dbname?sslmode=require
+      #   postgresql://postgres.xxxx:password@aws-0-region.pooler.supabase.com:6543/postgres
       - key: DATABASE_URL
         sync: false       # set manually in the dashboard
       - key: FLASK_APP
