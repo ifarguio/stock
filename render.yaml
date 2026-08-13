@@ -16,7 +16,7 @@ services:
   - type: web
     name: stock
     env: python
-    region: frankfurt     # change to your nearest region
+    region: singapore     # closest free region to China; if Render rejects it on the free plan, switch to oregon
     plan: free
     rootDir: webapp
     buildCommand: pip install -r requirements.txt
