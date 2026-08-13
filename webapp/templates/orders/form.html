@@ -2,7 +2,7 @@
 {% set active = 'orders' %}
 {% block content %}
 <div class="row justify-content-center">
-  <div class="col-lg-10">
+  <div class="col-lg-11">
     <h4 class="mb-3 fw-bold">{% if order %}Order #{{ order.id }}{% else %}{{ tr('dlg.order_title_new') }}{% endif %}</h4>
 
     {% if order %}
@@ -11,14 +11,14 @@
     </p>
     {% endif %}
 
-    <div class="card mb-3"><div class="card-body">
-      {% if order %}
-      <div class="row">
-        <div class="col-md-6"><label class="form-label">{{ tr('lbl.customer') }}</label><div class="form-control-plaintext">{{ order.customer_name }}</div></div>
-        <div class="col-md-6"><label class="form-label">{{ tr('lbl.order_date') }}</label><div class="form-control-plaintext">{{ order.order_date }}</div></div>
-      </div>
-      {% else %}
-      <form method="post" id="order-form">
+    {% if not order %}<form method="post" id="order-form">{% endif %}
+      <div class="card mb-3"><div class="card-body">
+        {% if order %}
+        <div class="row">
+          <div class="col-md-6"><label class="form-label">{{ tr('lbl.customer') }}</label><div class="form-control-plaintext">{{ order.customer_name }}</div></div>
+          <div class="col-md-6"><label class="form-label">{{ tr('lbl.order_date') }}</label><div class="form-control-plaintext">{{ order.order_date }}</div></div>
+        </div>
+        {% else %}
         <div class="row g-3">
           <div class="col-md-6">
             <label class="form-label">{{ tr('lbl.customer') }}</label>
@@ -29,121 +29,176 @@
             <input name="order_date" type="date" value="{{ today }}" class="form-control">
           </div>
         </div>
-      </form>
-      {% endif %}
-    </div></div>
+        {% endif %}
+      </div></div>
 
-    <div class="card mb-3">
-      <div class="card-body">
-        <h6 class="mb-3">{{ tr('sect.line_items') }}</h6>
-        <table class="table table-sm align-middle mb-0">
-          <thead>
-            <tr><th></th><th>{{ tr('col.code') }}</th><th>{{ tr('col.product') }}</th><th>{{ tr('col.color') }}</th><th>{{ tr('col.size') }}</th><th class="text-end">{{ tr('col.qty') }}</th><th class="text-end">{{ tr('col.price') }}</th><th class="text-end">{{ tr('col.subtotal') }}</th>{% if not order %}<th></th>{% endif %}</tr>
-          </thead>
-          <tbody id="items-body">
-            {% if order %}
-              {% for it in items %}
-              <tr>
-                <td>{% if it.has_image %}<img src="{{ url_for('product_thumb', product_id=it.product_id) }}" class="thumb" alt="" loading="lazy">{% endif %}</td>
-                <td>{{ it.product_code }}</td><td>{{ it.product_name }}</td><td>{{ it.color }}</td><td>{{ it.size }}</td>
-                <td class="text-end">{{ it.quantity }}</td><td class="text-end">{{ '%.2f' % it.unit_price }}</td>
-                <td class="text-end fw-semibold">{{ '%.2f' % (it.quantity * it.unit_price) }}</td>
-              </tr>
-              {% endfor %}
-            {% else %}
-              <tr class="empty-row"><td colspan="9" class="text-muted text-center py-3">—</td></tr>
-            {% endif %}
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    {% if not order %}
-    <div class="card mb-3"><div class="card-body">
-      <h6 class="mb-3">{{ tr('btn.add_line') }}</h6>
-      <div class="row g-2 align-items-end">
-        <div class="col-md-4">
-          <label class="form-label small">{{ tr('lbl.product') }}</label>
-          <select id="sel-product" class="form-select form-select-sm">
-            {% for p in products %}<option value="{{ p.id }}" data-price="{{ '%.2f' % p.base_price }}">{{ p.code }} - {{ p.name }}</option>{% endfor %}
-          </select>
+      <div class="card mb-3">
+        <div class="card-body">
+          <h6 class="mb-3">{{ tr('sect.line_items') }}</h6>
+          <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+              <thead>
+                <tr>
+                  <th></th><th>{{ tr('col.code') }}</th><th>{{ tr('col.product') }}</th>
+                  <th>{{ tr('col.color') }}</th><th>{{ tr('col.size') }}</th>
+                  <th class="text-end">{{ tr('col.qty') }}</th><th class="text-end">{{ tr('col.price') }}</th>
+                  <th class="text-end">{{ tr('col.subtotal') }}</th>
+                  {% if not order %}<th></th>{% endif %}
+                </tr>
+              </thead>
+              <tbody id="items-body">
+                {% if order %}
+                  {% for it in items %}
+                  <tr>
+                    <td>{% if it.has_image %}<img src="{{ url_for('product_thumb', product_id=it.product_id) }}" class="thumb" alt="" loading="lazy">{% endif %}</td>
+                    <td>{{ it.product_code }}</td><td>{{ it.product_name }}</td><td>{{ it.color }}</td><td>{{ it.size }}</td>
+                    <td class="text-end">{{ it.quantity }}</td><td class="text-end">{{ '%.2f' % it.unit_price }}</td>
+                    <td class="text-end fw-semibold">{{ '%.2f' % (it.quantity * it.unit_price) }}</td>
+                  </tr>
+                  {% endfor %}
+                {% else %}
+                  <tr class="empty-row"><td colspan="9" class="text-muted text-center py-3">—</td></tr>
+                {% endif %}
+              </tbody>
+            </table>
+          </div>
         </div>
-        <div class="col-md-2"><label class="form-label small">{{ tr('lbl.color') }}</label><input id="sel-color" class="form-control form-control-sm"></div>
-        <div class="col-md-2"><label class="form-label small">{{ tr('lbl.size') }}</label><input id="sel-size" class="form-control form-control-sm"></div>
-        <div class="col-md-1"><label class="form-label small">{{ tr('lbl.qty') }}</label><input id="sel-qty" type="number" min="1" value="1" class="form-control form-control-sm"></div>
-        <div class="col-md-2"><label class="form-label small">{{ tr('lbl.price') }}</label><input id="sel-price" type="number" step="0.01" class="form-control form-control-sm"></div>
-        <div class="col-md-1"><button type="button" id="add-line" class="btn btn-sm btn-primary w-100"><i class="bi bi-plus"></i></button></div>
       </div>
-    </div></div>
-    {% endif %}
 
-    {% if order %}
-    <div class="action-bar d-flex justify-content-between">
-      <a href="{{ url_for('orders') }}" class="btn btn-outline-secondary">{{ tr('btn.close') }}</a>
-      <div class="text-end"><div class="text-muted small">{{ tr('col.total') }}</div><div class="fw-bold fs-5 text-primary">{{ '%.2f' % order.total }}</div></div>
-    </div>
-    {% else %}
-    <div class="action-bar d-flex justify-content-between">
-      <a href="{{ url_for('orders') }}" class="btn btn-outline-secondary">{{ tr('btn.cancel') }}</a>
-      <div class="d-flex align-items-center gap-3">
-        <span class="fw-bold fs-5 text-primary">{{ tr('total.label', total=('--' )) }}</span>
-        <button type="submit" form="order-form" class="btn btn-primary">{{ tr('btn.save_order') }}</button>
+      {% if not order %}
+      {# Line editor: product -> color/size dropdowns filtered to that product #}
+      <div class="card mb-3"><div class="card-body">
+        <h6 class="mb-3">{{ tr('btn.add_line') }}</h6>
+        <div class="row g-2 align-items-end">
+          <div class="col-lg-4">
+            <label class="form-label small text-muted">{{ tr('lbl.product') }}</label>
+            <select id="sel-product" class="form-select form-select-sm">
+              {% for p in products %}<option value="{{ p.id }}" data-price="{{ '%.2f' % p.base_price }}">{{ p.code }} - {{ p.name }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="col-lg-2">
+            <label class="form-label small text-muted">{{ tr('lbl.color') }}</label>
+            <select id="sel-color" class="form-select form-select-sm"></select>
+          </div>
+          <div class="col-lg-2">
+            <label class="form-label small text-muted">{{ tr('lbl.size') }}</label>
+            <select id="sel-size" class="form-select form-select-sm"></select>
+          </div>
+          <div class="col-lg-1">
+            <label class="form-label small text-muted">{{ tr('lbl.qty') }}</label>
+            <input id="sel-qty" type="number" min="1" value="1" class="form-control form-control-sm">
+          </div>
+          <div class="col-lg-2">
+            <label class="form-label small text-muted">{{ tr('lbl.price') }}</label>
+            <input id="sel-price" type="number" step="0.01" class="form-control form-control-sm">
+          </div>
+          <div class="col-lg-1">
+            <button type="button" id="add-line" class="btn btn-sm btn-primary w-100"><i class="bi bi-plus-lg"></i></button>
+          </div>
+        </div>
+      </div></div>
+      {% endif %}
+
+      <div class="action-bar d-flex justify-content-between">
+        {% if order %}
+        <a href="{{ url_for('orders') }}" class="btn btn-outline-secondary">{{ tr('btn.close') }}</a>
+        <div class="text-end"><div class="text-muted small">{{ tr('col.total') }}</div><div class="fw-bold fs-5 text-primary">{{ '%.2f' % order.total }}</div></div>
+        {% else %}
+        <a href="{{ url_for('orders') }}" class="btn btn-outline-secondary">{{ tr('btn.cancel') }}</a>
+        <div class="d-flex align-items-center gap-3">
+          <span id="order-total" class="fw-bold fs-5 text-primary">{{ tr('total.label', total='0.00') }}</span>
+          <button type="submit" class="btn btn-primary">{{ tr('btn.save_order') }}</button>
+        </div>
+        {% endif %}
       </div>
-    </div>
-    {% endif %}
+    {% if not order %}</form>{% endif %}
   </div>
 </div>
 
+{# Variants data for the product dropdowns, injected as JSON. #}
 {% if not order %}
+<script id="variants-data" type="application/json">
+{{ variants_by_product | tojson }}
+</script>
 <script>
-// Auto-fill price when a product is selected.
-const sel = document.getElementById('sel-product');
-sel.addEventListener('change', () => {
-  const opt = sel.options[sel.selectedIndex];
-  document.getElementById('sel-price').value = opt.dataset.price || '0';
-});
-if (sel.options.length) { sel.dispatchEvent(new Event('change')); }
+const VARIANTS = JSON.parse(document.getElementById('variants-data').textContent);
+const selProduct = document.getElementById('sel-product');
+const selColor = document.getElementById('sel-color');
+const selSize = document.getElementById('sel-size');
+const selPrice = document.getElementById('sel-price');
 
-let lineIndex = 0;
+// Fill the color + size dropdowns based on the selected product.
+function refreshVariantDropdowns() {
+  const pid = parseInt(selProduct.value, 10);
+  const variants = VARIANTS[pid] || [];
+  // Distinct colors / sizes for this product, in stable order.
+  const colors = [...new Set(variants.map(v => v.color || ''))];
+  const sizes  = [...new Set(variants.map(v => v.size || ''))];
+  const opt = (label) => `<option value="">—</option>` +
+    (colors.length ? '' : `<option value="">(any)</option>`);
+  selColor.innerHTML = colors.map(c => `<option value="${c}">${c || '—'}</option>`).join('')
+    || `<option value="">(any)</option>`;
+  selSize.innerHTML = sizes.map(s => `<option value="${s}">${s || '—'}</option>`).join('')
+    || `<option value="">(any)</option>`;
+}
+
+selProduct.addEventListener('change', () => {
+  refreshVariantDropdowns();
+  const opt = selProduct.options[selProduct.selectedIndex];
+  selPrice.value = opt.dataset.price || '0';
+});
+refreshVariantDropdowns();
+if (selProduct.options.length) { selProduct.dispatchEvent(new Event('change')); }
+
 document.getElementById('add-line').addEventListener('click', () => {
-  const pid = sel.value, code = sel.options[sel.selectedIndex].text;
-  const color = document.getElementById('sel-color').value;
-  const size = document.getElementById('sel-size').value;
+  const pid = selProduct.value;
+  if (!pid) { alert('Please pick a product first.'); return; }
+  const code = selProduct.options[selProduct.selectedIndex].text;
+  const color = selColor.value;
+  const size = selSize.value;
   const qty = document.getElementById('sel-qty').value;
-  const price = document.getElementById('sel-price').value;
-  if (!pid || !qty) return;
+  const price = selPrice.value;
+  if (!qty || parseInt(qty) < 1) { alert('Quantity must be at least 1.'); return; }
   const subtotal = (parseFloat(qty) * parseFloat(price || 0)).toFixed(2);
 
   const body = document.getElementById('items-body');
-  body.querySelector('.empty-row')?.remove();
+  const empty = body.querySelector('.empty-row');
+  if (empty) empty.remove();
+
+  // IMPORTANT: hidden inputs MUST live inside a <td>, otherwise the browser
+  // drops them out of the table and the form never receives them.
   const tr = document.createElement('tr');
   tr.innerHTML = `
-    <td></td><td>${code.split(' - ')[0]}</td><td>${code.split(' - ').slice(1).join(' - ')}</td>
-    <td>${color}</td><td>${size}</td><td class="text-end">${qty}</td>
-    <td class="text-end">${parseFloat(price||0).toFixed(2)}</td><td class="text-end fw-semibold">${subtotal}</td>
+    <td></td>
+    <td>${code.split(' - ')[0]}</td>
+    <td>${code.split(' - ').slice(1).join(' - ')}</td>
+    <td>${color || '—'}</td>
+    <td>${size || '—'}</td>
+    <td class="text-end">${qty}</td>
+    <td class="text-end">${parseFloat(price||0).toFixed(2)}</td>
+    <td class="text-end fw-semibold">${subtotal}</td>
     <td><button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest('tr').remove(); recalc()">×</button></td>
-    <input type="hidden" name="product_id" value="${pid}">
-    <input type="hidden" name="color" value="${color}">
-    <input type="hidden" name="size" value="${size}">
-    <input type="hidden" name="quantity" value="${qty}">
-    <input type="hidden" name="unit_price" value="${price}">`;
-  // Move hidden inputs into the row so they submit per-line.
-  tr.querySelectorAll('input[type=hidden]').forEach(i => tr.appendChild(i));
+    <td class="d-none">
+      <input type="hidden" name="product_id" value="${pid}">
+      <input type="hidden" name="color" value="${color}">
+      <input type="hidden" name="size" value="${size}">
+      <input type="hidden" name="quantity" value="${qty}">
+      <input type="hidden" name="unit_price" value="${price}">
+    </td>`;
   body.appendChild(tr);
   recalc();
+  // Reset qty for the next line; keep product/color/size for speed.
   document.getElementById('sel-qty').value = 1;
 });
 
 function recalc() {
   let total = 0;
   document.querySelectorAll('#items-body tr').forEach(tr => {
-    const cells = tr.querySelectorAll('td');
-    if (cells.length) {
-      const sub = parseFloat(cells[7]?.textContent || 0);
-      if (!isNaN(sub)) total += sub;
-    }
+    const sub = parseFloat(tr.querySelector('td.text-end.fw-semibold')?.textContent || 0);
+    if (!isNaN(sub)) total += sub;
   });
-  document.querySelector('.action-bar .fw-bold.fs-5').textContent = '{{ tr('total.label', total='X') }}'.replace('X', total.toFixed(2));
+  document.getElementById('order-total').textContent =
+    '{{ tr("total.label", total="X") }}'.replace('X', total.toFixed(2));
 }
 </script>
 {% endif %}

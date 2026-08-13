@@ -26,78 +26,166 @@
   </div>
 </div>
 
-<ul class="nav nav-tabs mb-3">
-  <li class="nav-item"><a class="nav-link active" href="#">{{ tr('tab.stock_in') }}</a></li>
-  <li class="nav-item"><a class="nav-link disabled" href="#">{{ tr('tab.stock_out') }}</a></li>
-  <li class="nav-item"><a class="nav-link disabled" href="#">{{ tr('tab.history') }}</a></li>
+<ul class="nav nav-tabs mb-3" role="tablist">
+  <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-in" type="button" role="tab">{{ tr('tab.stock_in') }}</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-out" type="button" role="tab">{{ tr('tab.stock_out') }}</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-history" type="button" role="tab">{{ tr('tab.history') }}</button></li>
 </ul>
 
-<div class="row g-3">
-  <div class="col-lg-5">
-    <div class="card"><div class="card-body">
-      <h6 class="mb-3">{{ tr('tab.stock_in') }}</h6>
-      <form method="post" action="{{ url_for('stock_in_add', product_id=product.id) }}">
-        <div class="row g-2 mb-2">
-          <div class="col-6">
-            <label class="form-label small">{{ tr('lbl.color') }}</label>
-            <input list="vc" name="color" class="form-control form-control-sm">
-            <datalist id="vc">{% for v in variants %}<option value="{{ v.color }}">{% endfor %}</datalist>
-          </div>
-          <div class="col-6">
-            <label class="form-label small">{{ tr('lbl.size') }}</label>
-            <input list="vs" name="size" class="form-control form-control-sm">
-            <datalist id="vs">{% for v in variants %}<option value="{{ v.size }}">{% endfor %}</datalist>
-          </div>
-        </div>
-        <div class="row g-2 mb-2">
-          <div class="col-6">
-            <label class="form-label small">{{ tr('lbl.quantity') }}</label>
-            <input name="quantity" type="number" min="1" value="1" class="form-control form-control-sm" required>
-          </div>
-          <div class="col-6">
-            <label class="form-label small">{{ tr('lbl.unit_cost') }}</label>
-            <input name="unit_cost" type="number" step="0.01" value="{{ '%.2f' % product.base_price }}" class="form-control form-control-sm">
-          </div>
-        </div>
-        <div class="row g-2 mb-2">
-          <div class="col-6">
-            <label class="form-label small">{{ tr('lbl.date') }}</label>
-            <input name="date" type="date" class="form-control form-control-sm">
-          </div>
-          <div class="col-6">
-            <label class="form-label small">{{ tr('lbl.note') }}</label>
-            <input name="note" class="form-control form-control-sm">
-          </div>
-        </div>
-        <button class="btn btn-sm btn-primary w-100">{{ tr('btn.add') }}</button>
-      </form>
-    </div></div>
+<div class="tab-content">
+  {# ---- Stock-In ---- #}
+  <div class="tab-pane fade show active" id="tab-in" role="tabpanel">
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <div class="card"><div class="card-body">
+          <h6 class="mb-3">{{ tr('tab.stock_in') }}</h6>
+          <form method="post" action="{{ url_for('stock_in_add', product_id=product.id) }}">
+            <div class="row g-2 mb-2">
+              <div class="col-6">
+                <label class="form-label small text-muted">{{ tr('lbl.color') }}</label>
+                <select name="color" class="form-select form-select-sm">
+                  {% set colors = variants | map(attribute='color') | unique | list %}
+                  {% for c in colors %}<option value="{{ c }}">{{ c or '—' }}</option>{% endfor %}
+                  {% if not colors %}<option value="">(any)</option>{% endif %}
+                </select>
+              </div>
+              <div class="col-6">
+                <label class="form-label small text-muted">{{ tr('lbl.size') }}</label>
+                <select name="size" class="form-select form-select-sm">
+                  {% set sizes = variants | map(attribute='size') | unique | list %}
+                  {% for s in sizes %}<option value="{{ s }}">{{ s or '—' }}</option>{% endfor %}
+                  {% if not sizes %}<option value="">(any)</option>{% endif %}
+                </select>
+              </div>
+            </div>
+            <div class="row g-2 mb-2">
+              <div class="col-6">
+                <label class="form-label small text-muted">{{ tr('lbl.quantity') }}</label>
+                <input name="quantity" type="number" min="1" value="1" class="form-control form-control-sm" required>
+              </div>
+              <div class="col-6">
+                <label class="form-label small text-muted">{{ tr('lbl.unit_cost') }}</label>
+                <input name="unit_cost" type="number" step="0.01" value="{{ '%.2f' % product.base_price }}" class="form-control form-control-sm">
+              </div>
+            </div>
+            <div class="row g-2 mb-3">
+              <div class="col-6">
+                <label class="form-label small text-muted">{{ tr('lbl.date') }}</label>
+                <input name="date" type="date" class="form-control form-control-sm">
+              </div>
+              <div class="col-6">
+                <label class="form-label small text-muted">{{ tr('lbl.note') }}</label>
+                <input name="note" class="form-control form-control-sm">
+              </div>
+            </div>
+            <button class="btn btn-sm btn-primary w-100">{{ tr('btn.add') }}</button>
+          </form>
+        </div></div>
+      </div>
+
+      <div class="col-lg-7">
+        <div class="card"><div class="card-body">
+          <h6 class="mb-3">{{ tr('sect.current_stock') }}</h6>
+          <table class="table table-sm mb-0">
+            <thead><tr><th>{{ tr('col.color') }}</th><th>{{ tr('col.size') }}</th><th class="text-end">{{ tr('col.stock') }}</th></tr></thead>
+            <tbody>
+              {% for v in variants %}
+              <tr><td>{{ v.color or '—' }}</td><td>{{ v.size or '—' }}</td><td class="text-end fw-semibold">{{ v.stock }}</td></tr>
+              {% else %}
+              <tr><td colspan="3" class="text-muted text-center">—</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div></div>
+      </div>
+    </div>
   </div>
 
-  <div class="col-lg-7">
-    <div class="card"><div class="card-body">
-      <h6 class="mb-3">{{ tr('sect.current_stock') }}</h6>
-      <table class="table table-sm mb-0">
-        <thead><tr><th>{{ tr('col.color') }}</th><th>{{ tr('col.size') }}</th><th class="text-end">{{ tr('col.stock') }}</th></tr></thead>
-        <tbody>
-          {% for v in variants %}
-          <tr><td>{{ v.color or '—' }}</td><td>{{ v.size or '—' }}</td><td class="text-end fw-semibold">{{ v.stock }}</td></tr>
-          {% else %}
-          <tr><td colspan="3" class="text-muted text-center">—</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div></div>
+  {# ---- Stock-Out ---- #}
+  <div class="tab-pane fade" id="tab-out" role="tabpanel">
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <div class="card"><div class="card-body">
+          <h6 class="mb-3">{{ tr('tab.stock_out') }}</h6>
+          <form method="post" action="{{ url_for('stock_out_add', product_id=product.id) }}">
+            <div class="row g-2 mb-2">
+              <div class="col-6">
+                <label class="form-label small text-muted">{{ tr('lbl.color') }}</label>
+                <select name="color" class="form-select form-select-sm">
+                  {% for c in colors %}<option value="{{ c }}">{{ c or '—' }}</option>{% endfor %}
+                  {% if not colors %}<option value="">(any)</option>{% endif %}
+                </select>
+              </div>
+              <div class="col-6">
+                <label class="form-label small text-muted">{{ tr('lbl.size') }}</label>
+                <select name="size" class="form-select form-select-sm">
+                  {% for s in sizes %}<option value="{{ s }}">{{ s or '—' }}</option>{% endfor %}
+                  {% if not sizes %}<option value="">(any)</option>{% endif %}
+                </select>
+              </div>
+            </div>
+            <div class="row g-2 mb-2">
+              <div class="col-6">
+                <label class="form-label small text-muted">{{ tr('lbl.quantity') }}</label>
+                <input name="quantity" type="number" min="1" value="1" class="form-control form-control-sm" required>
+              </div>
+              <div class="col-6">
+                <label class="form-label small text-muted">{{ tr('lbl.customer') }}</label>
+                <input name="customer_name" class="form-control form-control-sm">
+              </div>
+            </div>
+            <div class="row g-2 mb-3">
+              <div class="col-6">
+                <label class="form-label small text-muted">{{ tr('lbl.date') }}</label>
+                <input name="date" type="date" class="form-control form-control-sm">
+              </div>
+              <div class="col-6">
+                <label class="form-label small text-muted">{{ tr('lbl.note') }}</label>
+                <input name="note" class="form-control form-control-sm">
+              </div>
+            </div>
+            <button class="btn btn-sm btn-success w-100">{{ tr('btn.remove_stock') }}</button>
+          </form>
+        </div></div>
+      </div>
 
-    <div class="card mt-3"><div class="card-body">
-      <h6 class="mb-3">{{ tr('sect.recent_stock_out') }}</h6>
+      <div class="col-lg-7">
+        <div class="card"><div class="card-body">
+          <h6 class="mb-3">{{ tr('sect.recent_stock_out') }}</h6>
+          <table class="table table-sm mb-0">
+            <thead><tr><th>{{ tr('col.date') }}</th><th>{{ tr('col.color') }}</th><th>{{ tr('col.size') }}</th><th>{{ tr('col.customer') }}</th><th class="text-end">{{ tr('col.qty') }}</th><th>{{ tr('col.note') }}</th></tr></thead>
+            <tbody>
+              {% for s in stock_out %}
+              <tr><td>{{ s.date }}</td><td>{{ s.color or '—' }}</td><td>{{ s.size or '—' }}</td><td>{{ s.customer_name }}</td><td class="text-end">{{ s.quantity }}</td><td class="text-muted">{{ s.note }}</td></tr>
+              {% else %}
+              <tr><td colspan="6" class="text-muted text-center">—</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div></div>
+      </div>
+    </div>
+  </div>
+
+  {# ---- History ---- #}
+  <div class="tab-pane fade" id="tab-history" role="tabpanel">
+    <div class="card"><div class="card-body">
+      <h6 class="mb-3">{{ tr('tab.history') }}</h6>
       <table class="table table-sm mb-0">
-        <thead><tr><th>{{ tr('col.date') }}</th><th>{{ tr('col.customer') }}</th><th>{{ tr('col.qty') }}</th><th>{{ tr('col.note') }}</th></tr></thead>
+        <thead><tr><th>{{ tr('col.type') }}</th><th>{{ tr('col.date') }}</th><th>{{ tr('col.color') }}</th><th>{{ tr('col.size') }}</th><th class="text-end">{{ tr('col.qty') }}</th><th>{{ tr('col.info') }}</th></tr></thead>
         <tbody>
-          {% for s in stock_out %}
-          <tr><td>{{ s.date }}</td><td>{{ s.customer_name }}</td><td>{{ s.quantity }}</td><td class="text-muted">{{ s.note }}</td></tr>
+          {% for h in history %}
+          <tr>
+            <td>
+              {% if h.type == 'IN' %}<span class="status-shipped">IN</span>
+              {% else %}<span class="status-new">OUT</span>{% endif %}
+            </td>
+            <td>{{ h.date }}</td><td>{{ h.color or '—' }}</td><td>{{ h.size or '—' }}</td>
+            <td class="text-end">{{ h.quantity }}</td>
+            <td class="text-muted">{{ h.info }}</td>
+          </tr>
           {% else %}
-          <tr><td colspan="4" class="text-muted text-center">—</td></tr>
+          <tr><td colspan="6" class="text-muted text-center">—</td></tr>
           {% endfor %}
         </tbody>
       </table>

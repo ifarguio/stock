@@ -49,6 +49,23 @@ def _to_rgb(img):
     return img
 
 
+def _iso(value) -> str:
+    """Normalise a date/datetime/str to an ISO 'YYYY-MM-DD' string."""
+    if value is None:
+        return ""
+    if hasattr(value, "isoformat"):
+        return value.isoformat()[:10]
+    return str(value)[:10]
+
+
+def _fmt(value) -> str:
+    """Format a numeric value with 2 decimals, tolerating None."""
+    try:
+        return f"{float(value):.2f}"
+    except (TypeError, ValueError):
+        return "0.00"
+
+
 def _optimise_image(data: bytes, max_size: int = 800, quality: int = 82) -> tuple[bytes, str]:
     """Resize and compress an uploaded image before storing it (full version).
 
@@ -292,13 +309,39 @@ def create_app() -> Flask:
         if not product:
             flash("Product not found.", "danger")
             return redirect(url_for("inventory"))
+        variants = repository.list_variants(product_id)
+        stock_in = repository.list_stock_in(product_id)
+        stock_out = repository.list_stock_out(product_id)
+        # Distinct colors / sizes for the dropdown selectors.
+        colors = sorted({v["color"] for v in variants})
+        sizes = sorted({v["size"] for v in variants})
+        # Combined, newest-first movement history for the History tab.
+        history = []
+        for r in stock_in:
+            history.append({
+                "type": "IN", "date": _iso(r["date"]),
+                "color": r["color"], "size": r["size"],
+                "quantity": r["quantity"],
+                "info": f"cost {_fmt(r['unit_cost'])}  {r['note']}".strip(),
+            })
+        for r in stock_out:
+            history.append({
+                "type": "OUT", "date": _iso(r["date"]),
+                "color": r["color"], "size": r["size"],
+                "quantity": r["quantity"],
+                "info": f"{r['customer_name']}  {r['note']}".strip(),
+            })
+        history.sort(key=lambda x: (str(x["date"]), x["type"]), reverse=True)
         return render_template(
             "inventory/detail.html",
             product=product,
             stock_total=repository.product_stock_total(product_id),
-            variants=repository.list_variants(product_id),
-            stock_in=repository.list_stock_in(product_id),
-            stock_out=repository.list_stock_out(product_id),
+            variants=variants,
+            stock_in=stock_in,
+            stock_out=stock_out,
+            colors=colors,
+            sizes=sizes,
+            history=history,
         )
 
     @app.route("/inventory/<int:product_id>/stock-in", methods=["POST"])
@@ -395,8 +438,13 @@ def create_app() -> Flask:
             oid = repository.create_order(customer, order_date, items)
             flash(translations.tr("info.saved_msg", order_id=oid), "success")
             return redirect(url_for("orders"))
+        products = repository.list_products()
+        variants_by_product = {
+            p["id"]: repository.list_variants(p["id"]) for p in products
+        }
         return render_template("orders/form.html", order=None,
-                               products=repository.list_products(),
+                               products=products,
+                               variants_by_product=variants_by_product,
                                today=date.today().isoformat())
 
     @app.route("/orders/<int:order_id>")
