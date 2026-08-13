@@ -72,7 +72,13 @@
           </td>
         </tr>
         {% else %}
-        <tr><td colspan="6" class="text-center text-muted py-4">—</td></tr>
+        <tr><td colspan="6">
+          <div class="empty-state">
+            <div class="empty-icon"><i class="bi bi-inbox"></i></div>
+            <div class="fw-semibold">{{ tr('inv.title') }}</div>
+            <div class="small">{{ tr('inv.subtitle') }}</div>
+          </div>
+        </td></tr>
         {% endfor %}
       </tbody>
     </table>

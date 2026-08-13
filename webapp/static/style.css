@@ -1,169 +1,344 @@
-/* Custom styles on top of Bootstrap 5, mirroring the desktop app's palette. */
+/* ============================================================
+   Inventory & Orders — UI kit
+   Minimalist, indigo accent, soft shadows, airy spacing.
+   ============================================================ */
 :root {
   --primary: #5b6cf2;
   --primary-hover: #4754d6;
+  --primary-soft: #eef0fe;
   --appbar: #3d4eb3;
+  --appbar-grad: linear-gradient(135deg, #3d4eb3 0%, #5b6cf2 100%);
   --success: #16a37b;
+  --success-soft: #e4f4ef;
   --warning: #e08a00;
+  --warning-soft: #fbecd4;
   --danger: #e25b5b;
-  --bg: #f4f6fa;
+  --danger-soft: #fbe4e4;
+  --bg: #f5f6fa;
   --surface: #ffffff;
-  --surface-alt: #f0f3f9;
-  --border: #e6eaf2;
+  --surface-alt: #f7f8fc;
+  --border: #eaecf3;
+  --border-strong: #d8dce8;
   --text: #1f2937;
-  --muted: #6b7280;
+  --text-soft: #4b5563;
+  --muted: #8a90a0;
+  --shadow-sm: 0 1px 2px rgba(20, 30, 60, 0.04), 0 1px 3px rgba(20, 30, 60, 0.06);
+  --shadow-md: 0 4px 12px rgba(20, 30, 60, 0.06), 0 2px 4px rgba(20, 30, 60, 0.04);
+  --shadow-lg: 0 12px 32px rgba(20, 30, 60, 0.10);
+  --radius: 0.65rem;
+  --radius-lg: 0.9rem;
+  --transition: 200ms cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+* { box-sizing: border-box; }
 
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  font-family: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", sans-serif;
+  font-size: 0.92rem;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* App bar (deep indigo header). */
-.appbar.navbar-dark {
-  background: var(--appbar);
-  min-height: 68px;
+h4, h6 { letter-spacing: -0.01em; }
+
+/* ============================================================
+   App bar — indigo gradient, brand + language + user
+   ============================================================ */
+.appbar {
+  background: var(--appbar-grad);
+  color: #fff;
+  box-shadow: var(--shadow-md);
+  position: relative;
+  z-index: 20;
 }
-.appbar .navbar-brand { font-size: 1.15rem; }
-.appbar-subtitle {
-  color: #c8d0f5;
-  font-size: 0.78rem;
+.appbar-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0.9rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.appbar-brand { display: flex; align-items: center; gap: 0.85rem; }
+.appbar-logo {
+  width: 42px; height: 42px;
+  border-radius: 0.6rem;
+  background: rgba(255, 255, 255, 0.18);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.25rem;
+  backdrop-filter: blur(4px);
+}
+.appbar-titles { display: flex; flex-direction: column; line-height: 1.2; }
+.appbar-title { font-size: 1.15rem; font-weight: 700; }
+.appbar-subtitle { font-size: 0.78rem; color: rgba(255, 255, 255, 0.75); }
+
+.appbar-actions { display: flex; align-items: center; gap: 0.6rem; }
+
+/* The language button — prominent, pill-shaped, on the app bar. */
+.lang-btn {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  padding: 0.4rem 0.85rem;
+  border-radius: 999px;
+  font-size: 0.82rem; font-weight: 600;
+  text-decoration: none;
+  transition: background var(--transition), transform var(--transition);
+}
+.lang-btn:hover {
+  background: rgba(255, 255, 255, 0.28);
+  color: #fff;
+  transform: translateY(-1px);
 }
 
-/* Page navigation tabs. */
-.page-nav .nav-link {
-  border: none;
-  padding: 0.9rem 1.1rem;
+.appbar-user {
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 0.85rem;
+  display: inline-flex; align-items: center; gap: 0.35rem;
+}
+.appbar-signout {
+  width: 36px; height: 36px;
+  border-radius: 0.5rem;
+  display: inline-flex; align-items: center; justify-content: center;
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.12);
+  transition: background var(--transition);
+  text-decoration: none;
+}
+.appbar-signout:hover { background: rgba(255, 255, 255, 0.24); color: #fff; }
+
+/* ============================================================
+   Page navigation tabs
+   ============================================================ */
+.page-nav {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 10;
+}
+.page-nav-inner {
+  max-width: 1400px; margin: 0 auto;
+  padding: 0 1.5rem;
+  display: flex; gap: 0.25rem;
+}
+.page-nav-link {
+  padding: 0.95rem 1.1rem;
   color: var(--muted);
-  font-weight: 600;
+  font-weight: 600; font-size: 0.92rem;
+  text-decoration: none;
   border-bottom: 3px solid transparent;
+  display: inline-flex; align-items: center; gap: 0.45rem;
+  transition: color var(--transition), border-color var(--transition);
 }
-.page-nav .nav-link.active {
-  color: var(--primary);
-  border-bottom-color: var(--primary);
-  background: transparent;
-}
-.page-nav .nav-link:hover { color: var(--primary); }
+.page-nav-link:hover { color: var(--primary); }
+.page-nav-link.active { color: var(--primary); border-bottom-color: var(--primary); }
 
-/* Cards / surfaces. */
+/* ============================================================
+   Main content area
+   ============================================================ */
+.app-main {
+  max-width: 1400px;
+  padding: 1.5rem;
+}
+
+/* ============================================================
+   Cards — soft shadow, rounded, white surface
+   ============================================================ */
 .card {
   border: 1px solid var(--border);
-  border-radius: 0.6rem;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  background: var(--surface);
 }
-.table > :not(caption) > * > * { padding: 0.7rem 0.85rem; }
+.card-body { padding: 1.25rem 1.35rem; }
+
+/* ============================================================
+   Filter bar
+   ============================================================ */
+.filter-bar {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 0.95rem 1.1rem;
+}
+
+/* ============================================================
+   Tables — clickable rows, hover, airy cells
+   ============================================================ */
+.table { margin-bottom: 0; }
+.table > :not(caption) > * > * { padding: 0.7rem 0.9rem; vertical-align: middle; }
 .table thead th {
   background: var(--surface-alt);
   color: var(--muted);
   font-weight: 600;
-  font-size: 0.85rem;
+  font-size: 0.74rem;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.05em;
   border-bottom: 1px solid var(--border);
+  border-top: 0;
+  white-space: nowrap;
+}
+.table-hover tbody tr {
+  transition: background var(--transition);
+  cursor: default;
+}
+.table-hover tbody tr:hover { background: var(--primary-soft); }
+.table a.fw-semibold, .table .fw-semibold a { color: var(--text); text-decoration: none; }
+.table a.fw-semibold:hover, .table .fw-semibold a:hover { color: var(--primary); }
+
+/* ============================================================
+   Status capsules (pills)
+   ============================================================ */
+.status-new {
+  display: inline-block;
+  background: var(--warning-soft);
+  color: var(--warning);
+  padding: 0.25rem 0.7rem;
+  border-radius: 999px;
+  font-weight: 600; font-size: 0.76rem;
+}
+.status-shipped {
+  display: inline-block;
+  background: var(--success-soft);
+  color: var(--success);
+  padding: 0.25rem 0.7rem;
+  border-radius: 999px;
+  font-weight: 600; font-size: 0.76rem;
 }
 
-/* Buttons colour overrides. */
+/* ============================================================
+   Buttons — flat, with hover lift
+   ============================================================ */
+.btn { border-radius: 0.5rem; font-weight: 600; transition: all var(--transition); }
 .btn-primary {
   --bs-btn-bg: var(--primary);
   --bs-btn-border-color: var(--primary);
   --bs-btn-hover-bg: var(--primary-hover);
   --bs-btn-hover-border-color: var(--primary-hover);
   --bs-btn-active-bg: var(--primary-hover);
-  font-weight: 600;
+  --bs-btn-disabled-bg: var(--primary);
+  --bs-btn-disabled-border-color: var(--primary);
+  box-shadow: 0 2px 6px rgba(91, 108, 242, 0.25);
 }
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(91, 108, 242, 0.35); }
 .btn-success {
   --bs-btn-bg: var(--success);
   --bs-btn-border-color: var(--success);
-  font-weight: 600;
+  --bs-btn-hover-bg: #128166;
+  --bs-btn-hover-border-color: #128166;
 }
 .btn-danger {
   --bs-btn-bg: var(--danger);
   --bs-btn-border-color: var(--danger);
+  --bs-btn-hover-bg: #d44848;
+  --bs-btn-hover-border-color: #d44848;
 }
 .btn-outline-secondary {
-  --bs-btn-color: var(--text);
-  --bs-btn-border-color: var(--border);
+  --bs-btn-color: var(--text-soft);
+  --bs-btn-border-color: var(--border-strong);
+  --bs-btn-hover-bg: var(--surface-alt);
+  --bs-btn-hover-color: var(--text);
+  --bs-btn-hover-border-color: var(--border-strong);
+}
+.btn-outline-primary {
+  --bs-btn-color: var(--primary);
+  --bs-btn-border-color: var(--primary);
+  --bs-btn-hover-bg: var(--primary);
 }
 
-/* Status badges. */
-.status-new {
-  background: rgba(224, 138, 0, 0.15);
-  color: var(--warning);
-  padding: 0.25rem 0.6rem;
-  border-radius: 1rem;
-  font-weight: 600;
-  font-size: 0.8rem;
-}
-.status-shipped {
-  background: rgba(22, 163, 123, 0.15);
-  color: var(--success);
-  padding: 0.25rem 0.6rem;
-  border-radius: 1rem;
-  font-weight: 600;
-  font-size: 0.8rem;
+/* ============================================================
+   Forms
+   ============================================================ */
+.form-control:focus, .form-select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 0.2rem rgba(91, 108, 242, 0.15);
 }
 
-/* Metric cards on the stats page. */
+/* ============================================================
+   Sticky action bar (bottom of forms)
+   ============================================================ */
+.action-bar {
+  position: sticky;
+  bottom: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  padding: 0.85rem 1.1rem;
+  z-index: 10;
+}
+
+/* ============================================================
+   Product thumbnails
+   ============================================================ */
+.thumb {
+  width: 44px; height: 44px;
+  object-fit: cover;
+  border-radius: 0.45rem;
+  border: 1px solid var(--border);
+  background: var(--surface-alt);
+}
+.thumb-lg {
+  width: 120px; height: 120px;
+  object-fit: cover;
+  border-radius: 0.6rem;
+  border: 1px solid var(--border);
+  background: var(--surface-alt);
+}
+
+/* ============================================================
+   Metric cards (stats)
+   ============================================================ */
 .metric-card {
   border: 1px solid var(--border);
-  border-radius: 0.6rem;
-  padding: 1.25rem 1.5rem;
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 1.4rem;
   background: var(--surface);
+  box-shadow: var(--shadow-sm);
 }
-.metric-value {
-  font-size: 1.9rem;
-  font-weight: 800;
-  line-height: 1.1;
-}
-.metric-label {
-  color: var(--muted);
-  font-size: 0.85rem;
-  margin-top: 0.25rem;
-}
+.metric-value { font-size: 1.85rem; font-weight: 800; line-height: 1.1; }
+.metric-label { color: var(--muted); font-size: 0.82rem; margin-top: 0.2rem; }
 .metric-icon {
-  width: 48px;
-  height: 48px;
+  width: 48px; height: 48px;
   border-radius: 0.6rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: flex; align-items: center; justify-content: center;
   font-size: 1.4rem;
   margin-right: 1rem;
   flex-shrink: 0;
 }
 
-/* Product thumbnail in tables. */
-.thumb {
-  width: 44px;
-  height: 44px;
-  object-fit: cover;
-  border-radius: 0.35rem;
-  border: 1px solid var(--border);
-  background: var(--surface-alt);
+/* ============================================================
+   Empty states
+   ============================================================ */
+.empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--muted);
 }
-.thumb-lg {
-  width: 120px;
-  height: 120px;
-  object-fit: cover;
-  border-radius: 0.5rem;
-  border: 1px solid var(--border);
-  background: var(--surface-alt);
+.empty-state .empty-icon {
+  font-size: 2.5rem;
+  color: var(--border-strong);
+  margin-bottom: 0.75rem;
 }
 
-/* Sticky action bar (footer) on forms. */
-.action-bar {
-  position: sticky;
-  bottom: 0;
-  background: var(--surface);
-  border-top: 1px solid var(--border);
-  padding: 0.85rem 1rem;
-  z-index: 10;
+/* ============================================================
+   Responsive — collapse the app bar on small screens
+   ============================================================ */
+@media (max-width: 640px) {
+  .appbar-inner { flex-wrap: wrap; padding: 0.7rem 1rem; }
+  .appbar-subtitle { display: none; }
+  .appbar-user { display: none; }
+  .app-main { padding: 1rem; }
+  .page-nav-link { padding: 0.8rem 0.7rem; font-size: 0.85rem; }
+  .page-nav-link i { display: none; }
 }
 
-/* Filter bar. */
-.filter-bar {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 0.6rem;
-  padding: 0.85rem 1rem;
+/* Smooth focus outline everywhere */
+a:focus-visible, button:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: 0.3rem;
 }

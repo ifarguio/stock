@@ -1,4 +1,4 @@
-{# Base layout: navbar, language toggle, flash messages, Bootstrap 5. #}
+{# Base layout: indigo app bar, language switch, flash messages, Bootstrap 5. #}
 <!doctype html>
 <html lang="{{ lang }}">
 <head>
@@ -11,32 +11,47 @@
 </head>
 <body>
   {% if current_user %}
-  <nav class="appbar navbar navbar-dark shadow-sm">
-    <div class="container-fluid px-4">
-      <div class="d-flex flex-column">
-        <span class="navbar-brand mb-0 h1 fw-bold">{{ tr('app.appbar') }}</span>
-        <span class="appbar-subtitle">{{ tr('app.appbar_subtitle') }}</span>
+  <nav class="appbar">
+    <div class="appbar-inner">
+      <div class="appbar-brand">
+        <span class="appbar-logo"><i class="bi bi-box-seam"></i></span>
+        <div class="appbar-titles">
+          <span class="appbar-title">{{ tr('app.appbar') }}</span>
+          <span class="appbar-subtitle">{{ tr('app.appbar_subtitle') }}</span>
+        </div>
       </div>
-      <div class="d-flex align-items-center gap-3">
-        <a class="btn btn-sm btn-outline-light" href="{{ url_for('set_lang', lang='zh' if lang=='en' else 'en') }}">{{ tr('lang.switch_to') }}</a>
-        <span class="text-light small">{{ current_user.display_name }}</span>
-        <a class="btn btn-sm btn-outline-light" href="{{ url_for('logout') }}"><i class="bi bi-box-arrow-right"></i> {{ tr('btn.sign_out') }}</a>
+      <div class="appbar-actions">
+        <a class="lang-btn" href="{{ url_for('set_lang', lang='zh' if lang=='en' else 'en') }}"
+           title="{{ 'Switch to Chinese' if lang=='en' else '切换到英文' }}">
+          <i class="bi bi-translate"></i>
+          <span>{{ 'EN' if lang=='en' else '中文' }}</span>
+        </a>
+        <span class="appbar-user">
+          <i class="bi bi-person-circle"></i> {{ current_user.display_name }}
+        </span>
+        <a class="appbar-signout" href="{{ url_for('logout') }}" title="{{ tr('btn.sign_out') }}">
+          <i class="bi bi-box-arrow-right"></i>
+        </a>
       </div>
     </div>
   </nav>
 
-  <div class="page-nav bg-white border-bottom">
-    <div class="container-fluid px-4">
-      <ul class="nav nav-tabs border-0">
-        <li class="nav-item"><a class="nav-link {% if active=='inventory' %}active{% endif %}" href="{{ url_for('inventory') }}">{{ tr('tab.inventory') }}</a></li>
-        <li class="nav-item"><a class="nav-link {% if active=='orders' %}active{% endif %}" href="{{ url_for('orders') }}">{{ tr('tab.orders') }}</a></li>
-        <li class="nav-item"><a class="nav-link {% if active=='stats' %}active{% endif %}" href="{{ url_for('stats') }}">{{ tr('tab.statistics') }}</a></li>
-      </ul>
+  <div class="page-nav">
+    <div class="page-nav-inner">
+      <a class="page-nav-link {% if active=='inventory' %}active{% endif %}" href="{{ url_for('inventory') }}">
+        <i class="bi bi-grid"></i> {{ tr('tab.inventory') }}
+      </a>
+      <a class="page-nav-link {% if active=='orders' %}active{% endif %}" href="{{ url_for('orders') }}">
+        <i class="bi bi-receipt"></i> {{ tr('tab.orders') }}
+      </a>
+      <a class="page-nav-link {% if active=='stats' %}active{% endif %}" href="{{ url_for('stats') }}">
+        <i class="bi bi-bar-chart"></i> {{ tr('tab.statistics') }}
+      </a>
     </div>
   </div>
   {% endif %}
 
-  <main class="container-fluid px-4 py-4">
+  <main class="container-fluid app-main">
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% for category, message in messages %}
         <div class="alert alert-{{ 'danger' if category=='danger' else 'success' if category=='success' else 'info' if category=='info' else 'warning' }} alert-dismissible fade show" role="alert">
