@@ -14,15 +14,6 @@
       <div class="text-end">
         <div class="metric-value text-primary">{{ stock_total }}</div>
         <div class="metric-label">{{ tr('detail.units_in_stock') }}</div>
-        <form method="post" action="{{ url_for('stock_adjust', product_id=product.id) }}"
-              class="d-inline-flex gap-1 align-items-center mt-2">
-          <input type="number" name="delta" class="form-control form-control-sm quick-stock-input"
-                 value="0" min="0" title="{{ tr('lbl.quantity') }} +/−">
-          <button type="submit" name="direction" value="in"
-                  class="btn btn-sm btn-success quick-stock-btn" title="+"><i class="bi bi-plus-lg"></i></button>
-          <button type="submit" name="direction" value="out"
-                  class="btn btn-sm btn-outline-danger quick-stock-btn" title="−"><i class="bi bi-dash-lg"></i></button>
-        </form>
       </div>
     </div>
     <div class="mt-3">
@@ -95,13 +86,35 @@
       <div class="col-lg-7">
         <div class="card"><div class="card-body">
           <h6 class="mb-3">{{ tr('sect.current_stock') }}</h6>
-          <table class="table table-sm mb-0">
-            <thead><tr><th>{{ tr('col.color') }}</th><th>{{ tr('col.size') }}</th><th class="text-end">{{ tr('col.stock') }}</th></tr></thead>
+          <table class="table table-sm mb-0 align-middle">
+            <thead><tr>
+              <th>{{ tr('col.color') }}</th>
+              <th>{{ tr('col.size') }}</th>
+              <th class="text-end">{{ tr('col.stock') }}</th>
+              <th>{{ tr('lbl.quantity') }} ±</th>
+            </tr></thead>
             <tbody>
               {% for v in variants %}
-              <tr><td>{{ v.color or '—' }}</td><td>{{ v.size or '—' }}</td><td class="text-end fw-semibold">{{ v.stock }}</td></tr>
+              <tr>
+                <td>{{ v.color or '—' }}</td>
+                <td>{{ v.size or '—' }}</td>
+                <td class="text-end fw-semibold">{{ v.stock }}</td>
+                <td>
+                  <form method="post" action="{{ url_for('stock_adjust', product_id=product.id) }}"
+                        class="d-flex gap-1 align-items-center quick-stock">
+                    <input type="hidden" name="color" value="{{ v.color }}">
+                    <input type="hidden" name="size" value="{{ v.size }}">
+                    <input type="number" name="delta" class="form-control form-control-sm quick-stock-input"
+                           value="0" min="0" title="{{ tr('lbl.quantity') }} +/−">
+                    <button type="submit" name="direction" value="in"
+                            class="btn btn-sm btn-success quick-stock-btn" title="+"><i class="bi bi-plus-lg"></i></button>
+                    <button type="submit" name="direction" value="out"
+                            class="btn btn-sm btn-outline-danger quick-stock-btn" title="−"><i class="bi bi-dash-lg"></i></button>
+                  </form>
+                </td>
+              </tr>
               {% else %}
-              <tr><td colspan="3" class="text-muted text-center">—</td></tr>
+              <tr><td colspan="4" class="text-muted text-center">—</td></tr>
               {% endfor %}
             </tbody>
           </table>
