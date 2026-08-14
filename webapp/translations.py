@@ -32,6 +32,36 @@ _STRINGS: dict[str, dict[str, str]] = {
         "login.bad": "Wrong username or password.",
         "login.signed_out": "You have been signed out.",
 
+        "menu.change_password": "Change password",
+        "menu.manage_users": "Manage users",
+        "menu.reset_db": "Reset all data",
+
+        "profile.old_password": "Current password",
+        "profile.new_password": "New password",
+        "profile.confirm_password": "Confirm new password",
+
+        "admin.users_subtitle": "Create accounts and manage access",
+        "admin.create_user": "Create user",
+        "admin.make_admin": "Administrator (can manage users and reset data)",
+        "admin.existing_users": "Existing users",
+
+        "err.wrong_password": "Current password is incorrect.",
+        "err.password_short": "Password must be at least 4 characters.",
+        "err.password_mismatch": "New passwords do not match.",
+        "err.invalid_input": "Please fill in all fields (password min 4 chars).",
+        "err.user_exists": "This username is already taken.",
+        "err.cannot_delete_self": "You cannot delete your own account.",
+        "err.confirm_reset": "Please type RESET to confirm.",
+
+        "info.password_changed": "Password changed.",
+        "info.user_created": "User '{username}' created.",
+        "info.user_deleted": "User deleted.",
+        "info.db_reset": "All data has been cleared. User accounts were kept.",
+
+        "confirm.delete_user_msg": "Delete this user account?",
+        "confirm.reset_db_msg": "This will permanently delete ALL products, orders and stock movements.",
+        "confirm.reset_db_hint": "Type RESET in the field below to confirm. User accounts are NOT deleted.",
+
         "inv.title": "Inventory",
         "inv.subtitle": "Track products, stock-in and stock-out movements.",
         "inv.search_placeholder": "Search by code or name...",
@@ -183,6 +213,36 @@ _STRINGS: dict[str, dict[str, str]] = {
         "login.submit": "登录",
         "login.bad": "用户名或密码错误。",
         "login.signed_out": "您已退出登录。",
+
+        "menu.change_password": "修改密码",
+        "menu.manage_users": "用户管理",
+        "menu.reset_db": "清空所有数据",
+
+        "profile.old_password": "当前密码",
+        "profile.new_password": "新密码",
+        "profile.confirm_password": "确认新密码",
+
+        "admin.users_subtitle": "创建账号并管理访问权限",
+        "admin.create_user": "创建用户",
+        "admin.make_admin": "管理员(可管理用户和清空数据)",
+        "admin.existing_users": "现有用户",
+
+        "err.wrong_password": "当前密码不正确。",
+        "err.password_short": "密码至少需要 4 个字符。",
+        "err.password_mismatch": "两次输入的新密码不一致。",
+        "err.invalid_input": "请填写所有字段(密码至少 4 个字符)。",
+        "err.user_exists": "该用户名已被占用。",
+        "err.cannot_delete_self": "不能删除自己的账号。",
+        "err.confirm_reset": "请输入 RESET 以确认。",
+
+        "info.password_changed": "密码已修改。",
+        "info.user_created": "用户 “{username}” 已创建。",
+        "info.user_deleted": "用户已删除。",
+        "info.db_reset": "所有数据已清空。用户账号已保留。",
+
+        "confirm.delete_user_msg": "删除此用户账号?",
+        "confirm.reset_db_msg": "此操作将永久删除所有商品、订单和库存记录。",
+        "confirm.reset_db_hint": "在下方输入 RESET 以确认。用户账号不会被删除。",
 
         "inv.title": "库存",
         "inv.subtitle": "管理商品、入库与出库记录。",

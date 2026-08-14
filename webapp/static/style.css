@@ -94,21 +94,28 @@ h4, h6 { letter-spacing: -0.01em; }
   transform: translateY(-1px);
 }
 
-.appbar-user {
-  color: rgba(255, 255, 255, 0.92);
-  font-size: 0.85rem;
-  display: inline-flex; align-items: center; gap: 0.35rem;
-}
-.appbar-signout {
-  width: 36px; height: 36px;
-  border-radius: 0.5rem;
-  display: inline-flex; align-items: center; justify-content: center;
-  color: rgba(255, 255, 255, 0.9);
-  background: rgba(255, 255, 255, 0.12);
+/* Clickable profile button (opens the dropdown menu). */
+.appbar-profile {
+  display: inline-flex; align-items: center; gap: 0.45rem;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  color: #fff;
+  padding: 0.4rem 0.8rem;
+  border-radius: 999px;
+  font-size: 0.85rem; font-weight: 600;
   transition: background var(--transition);
-  text-decoration: none;
 }
-.appbar-signout:hover { background: rgba(255, 255, 255, 0.24); color: #fff; }
+.appbar-profile:hover, .appbar-profile:focus { background: rgba(255, 255, 255, 0.26); color: #fff; }
+.appbar-profile::after { border-color: rgba(255,255,255,0.7); }
+.admin-badge {
+  background: #ffd166;
+  color: #7a5a00;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  padding: 0.15rem 0.4rem;
+  border-radius: 0.3rem;
+}
 
 /* ============================================================
    Page navigation tabs

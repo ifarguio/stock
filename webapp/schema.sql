@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS users (
     username      TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,                   -- Werkzeug PBKDF2 hash
     display_name  TEXT,
+    is_admin      BOOLEAN NOT NULL DEFAULT FALSE,  -- admins can manage users & reset data
     created_at    TIMESTAMP NOT NULL DEFAULT now()
 );
 

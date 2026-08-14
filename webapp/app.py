@@ -28,7 +28,8 @@ from flask import (
 import db
 import repository
 from auth import (
-    User, current_user, login_required, login_user, logout_current_user,
+    User, admin_required, change_password, current_user, delete_user,
+    list_users, login_required, login_user, logout_current_user,
     get_user_by_username, verify_password, create_user,
 )
 from config import Config
@@ -596,6 +597,83 @@ def create_app() -> Flask:
         labels = [s["bucket"] for s in series]
         values = [float(s[metric]) for s in series]
         return jsonify({"labels": labels, "values": values, "metric": metric})
+
+    # ---- Profile: change own password ----------------------------------
+    @app.route("/profile", methods=["GET", "POST"])
+    @login_required
+    def profile():
+        user = current_user()
+        if request.method == "POST":
+            old = request.form.get("old_password", "")
+            new = request.form.get("new_password", "")
+            confirm = request.form.get("confirm_password", "")
+            row = get_user_by_username(user.username)
+            if not row or not verify_password(row["password_hash"], old):
+                flash(translations.tr("err.wrong_password"), "danger")
+            elif len(new) < 4:
+                flash(translations.tr("err.password_short"), "danger")
+            elif new != confirm:
+                flash(translations.tr("err.password_mismatch"), "danger")
+            else:
+                change_password(user.id, new)
+                flash(translations.tr("info.password_changed"), "success")
+                return redirect(url_for("inventory"))
+        return render_template("profile.html")
+
+    # ---- Admin: manage users -------------------------------------------
+    @app.route("/admin/users", methods=["GET", "POST"])
+    @admin_required
+    def admin_users():
+        if request.method == "POST":
+            action = request.form.get("action", "create")
+            if action == "create":
+                username = request.form.get("username", "").strip()
+                password = request.form.get("password", "")
+                display = request.form.get("display_name", "").strip()
+                make_admin = request.form.get("is_admin") == "1"
+                if not username or len(password) < 4:
+                    flash(translations.tr("err.invalid_input"), "danger")
+                else:
+                    try:
+                        create_user(username, password, display, make_admin)
+                        flash(translations.tr("info.user_created", username=username), "success")
+                    except Exception:
+                        flash(translations.tr("err.user_exists"), "danger")
+            elif action == "delete":
+                uid = int(request.form.get("user_id", "0"))
+                me = current_user()
+                if uid == me.id:
+                    flash(translations.tr("err.cannot_delete_self"), "danger")
+                else:
+                    delete_user(uid)
+                    flash(translations.tr("info.user_deleted"), "success")
+            elif action == "reset_password":
+                uid = int(request.form.get("user_id", "0"))
+                new_pass = request.form.get("new_password", "")
+                if len(new_pass) < 4:
+                    flash(translations.tr("err.password_short"), "danger")
+                else:
+                    change_password(uid, new_pass)
+                    flash(translations.tr("info.password_changed"), "success")
+            return redirect(url_for("admin_users"))
+        return render_template("admin_users.html", users=list_users())
+
+    # ---- Admin: wipe all business data ----------------------------------
+    @app.route("/admin/reset-db", methods=["POST"])
+    @admin_required
+    def admin_reset_db():
+        """Delete ALL products, orders and stock movements. Users are kept."""
+        if request.form.get("confirm") != "RESET":
+            flash(translations.tr("err.confirm_reset"), "danger")
+            return redirect(url_for("admin_users"))
+        with db.transaction() as cur:
+            cur.execute(
+                "TRUNCATE order_items, stock_out, stock_in, "
+                "product_variants, orders, products RESTART IDENTITY CASCADE"
+            )
+        _thumb_cache.clear()
+        flash(translations.tr("info.db_reset"), "success")
+        return redirect(url_for("inventory"))
 
     # ---- CLI commands --------------------------------------------------
     @app.cli.command("init-db")

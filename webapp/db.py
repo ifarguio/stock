@@ -130,3 +130,20 @@ def init_schema() -> None:
     with _conn() as conn:
         with conn.cursor() as cur:
             cur.execute(schema_sql)
+            # Migration for databases created before the is_admin column:
+            # add it silently if missing (swallow "duplicate column").
+            try:
+                cur.execute(
+                    "ALTER TABLE users ADD COLUMN is_admin BOOLEAN NOT NULL DEFAULT FALSE"
+                )
+            except Exception:
+                conn.rollback()
+                cur = conn.cursor()
+            # Ensure at least one admin exists: promote the earliest user.
+            cur.execute(
+                """
+                UPDATE users SET is_admin = TRUE
+                WHERE id = (SELECT MIN(id) FROM users)
+                  AND NOT EXISTS (SELECT 1 FROM users WHERE is_admin)
+                """
+            )

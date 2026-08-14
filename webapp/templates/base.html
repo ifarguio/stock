@@ -26,15 +26,70 @@
           <i class="bi bi-translate"></i>
           <span>{{ 'EN' if lang=='en' else '中文' }}</span>
         </a>
-        <span class="appbar-user">
-          <i class="bi bi-person-circle"></i> {{ current_user.display_name }}
-        </span>
-        <a class="appbar-signout" href="{{ url_for('logout') }}" title="{{ tr('btn.sign_out') }}">
-          <i class="bi bi-box-arrow-right"></i>
-        </a>
+        {# Clickable profile with dropdown menu #}
+        <div class="dropdown">
+          <button class="appbar-profile dropdown-toggle" data-bs-toggle="dropdown"
+                  aria-expanded="false" title="{{ current_user.display_name }}">
+            <i class="bi bi-person-circle"></i>
+            <span class="d-none d-md-inline">{{ current_user.display_name }}</span>
+            {% if current_user.is_admin %}<span class="admin-badge">ADMIN</span>{% endif %}
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end shadow">
+            <li>
+              <a class="dropdown-item" href="{{ url_for('profile') }}">
+                <i class="bi bi-key"></i> {{ tr('menu.change_password') }}
+              </a>
+            </li>
+            {% if current_user.is_admin %}
+            <li><hr class="dropdown-divider"></li>
+            <li>
+              <a class="dropdown-item" href="{{ url_for('admin_users') }}">
+                <i class="bi bi-people"></i> {{ tr('menu.manage_users') }}
+              </a>
+            </li>
+            <li>
+              <a class="dropdown-item text-danger" href="#"
+                 data-bs-toggle="modal" data-bs-target="#resetDbModal">
+                <i class="bi bi-exclamation-triangle"></i> {{ tr('menu.reset_db') }}
+              </a>
+            </li>
+            {% endif %}
+            <li><hr class="dropdown-divider"></li>
+            <li>
+              <a class="dropdown-item" href="{{ url_for('logout') }}">
+                <i class="bi bi-box-arrow-right"></i> {{ tr('btn.sign_out') }}
+              </a>
+            </li>
+          </ul>
+        </div>
       </div>
     </div>
   </nav>
+
+  {# Reset-database confirmation modal (admin only) #}
+  {% if current_user.is_admin %}
+  <div class="modal fade" id="resetDbModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title text-danger"><i class="bi bi-exclamation-triangle"></i> {{ tr('menu.reset_db') }}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p>{{ tr('confirm.reset_db_msg') }}</p>
+          <p class="text-muted small mb-2">{{ tr('confirm.reset_db_hint') }}</p>
+          <form method="post" action="{{ url_for('admin_reset_db') }}" id="reset-db-form">
+            <input type="text" name="confirm" class="form-control" placeholder="RESET" required>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ tr('btn.cancel') }}</button>
+          <button type="submit" form="reset-db-form" class="btn btn-danger">{{ tr('menu.reset_db') }}</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
 
   <div class="page-nav">
     <div class="page-nav-inner">

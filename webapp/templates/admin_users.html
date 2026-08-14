@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-end mb-3">
+  <div>
+    <h4 class="mb-0 fw-bold"><i class="bi bi-people"></i> {{ tr('menu.manage_users') }}</h4>
+    <span class="text-muted small">{{ tr('admin.users_subtitle') }}</span>
+  </div>
+</div>
+
+<div class="row g-3">
+  {# Create a new user #}
+  <div class="col-lg-4">
+    <div class="card"><div class="card-body">
+      <h6 class="mb-3">{{ tr('admin.create_user') }}</h6>
+      <form method="post">
+        <input type="hidden" name="action" value="create">
+        <div class="mb-2">
+          <label class="form-label small text-muted">{{ tr('login.username') }}</label>
+          <input name="username" class="form-control form-control-sm" required>
+        </div>
+        <div class="mb-2">
+          <label class="form-label small text-muted">{{ tr('lbl.name') }}</label>
+          <input name="display_name" class="form-control form-control-sm">
+        </div>
+        <div class="mb-3">
+          <label class="form-label small text-muted">{{ tr('login.password') }}</label>
+          <input type="password" name="password" class="form-control form-control-sm" minlength="4" required>
+        </div>
+        <div class="form-check mb-3">
+          <input class="form-check-input" type="checkbox" name="is_admin" value="1" id="isAdminCheck">
+          <label class="form-check-label small" for="isAdminCheck">{{ tr('admin.make_admin') }}</label>
+        </div>
+        <button type="submit" class="btn btn-sm btn-primary w-100">{{ tr('btn.save') }}</button>
+      </form>
+    </div></div>
+  </div>
+
+  {# User list #}
+  <div class="col-lg-8">
+    <div class="card"><div class="card-body">
+      <h6 class="mb-3">{{ tr('admin.existing_users') }}</h6>
+      <table class="table table-sm align-middle mb-0">
+        <thead>
+          <tr>
+            <th>ID</th><th>{{ tr('login.username') }}</th><th>{{ tr('lbl.name') }}</th>
+            <th>{{ tr('col.status') }}</th><th class="text-end">—</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in users %}
+          <tr>
+            <td>{{ u.id }}</td>
+            <td class="fw-semibold">{{ u.username }}</td>
+            <td>{{ u.display_name }}</td>
+            <td>
+              {% if u.is_admin %}<span class="status-shipped">Admin</span>
+              {% else %}<span class="text-muted">User</span>{% endif %}
+            </td>
+            <td class="text-end">
+              <div class="d-inline-flex gap-1">
+                {# Reset password inline #}
+                <form method="post" class="d-inline" onsubmit="return resetPass(this)">
+                  <input type="hidden" name="action" value="reset_password">
+                  <input type="hidden" name="user_id" value="{{ u.id }}">
+                  <input type="password" name="new_password" class="form-control form-control-sm d-none pass-input"
+                         placeholder="{{ tr('login.password') }}" minlength="4" required>
+                  <button type="submit" class="btn btn-sm btn-outline-secondary" title="{{ tr('menu.change_password') }}">
+                    <i class="bi bi-key"></i>
+                  </button>
+                </form>
+                {% if u.id != current_user.id %}
+                <form method="post" class="d-inline"
+                      onsubmit="return confirm('{{ tr('confirm.delete_user_msg') }}')">
+                  <input type="hidden" name="action" value="delete">
+                  <input type="hidden" name="user_id" value="{{ u.id }}">
+                  <button type="submit" class="btn btn-sm btn-outline-danger" title="{{ tr('btn.delete') }}">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </form>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div></div>
+  </div>
+</div>
+
+<script>
+// Reveal the password input next to the reset button before submitting.
+function resetPass(form) {
+  const input = form.querySelector('.pass-input');
+  if (input.classList.contains('d-none')) {
+    input.classList.remove('d-none');
+    input.focus();
+    return false; // first click just reveals the field
+  }
+  if (!input.value || input.value.length < 4) return false;
+  return true;
+}
+</script>
+{% endblock %}
