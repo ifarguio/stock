@@ -48,6 +48,11 @@
               </a>
             </li>
             <li>
+              <a class="dropdown-item" href="{{ url_for('admin_backup') }}">
+                <i class="bi bi-download"></i> {{ tr('menu.backup') }}
+              </a>
+            </li>
+            <li>
               <a class="dropdown-item text-danger" href="#"
                  data-bs-toggle="modal" data-bs-target="#resetDbModal">
                 <i class="bi bi-exclamation-triangle"></i> {{ tr('menu.reset_db') }}

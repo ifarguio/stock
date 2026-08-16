@@ -694,6 +694,60 @@ def create_app() -> Flask:
         flash(translations.tr("info.db_reset"), "success")
         return redirect(url_for("inventory"))
 
+    # ---- Admin: download full backup as one JSON file --------------------
+    @app.route("/admin/backup")
+    @admin_required
+    def admin_backup():
+        """Export the entire database as a single downloadable JSON file.
+
+        Every table (including user password hashes and product images as
+        base64) is included, so the file is a complete, restorable snapshot.
+        """
+        import base64
+        import json as _json
+        from decimal import Decimal
+        from datetime import date as _date, datetime as _dt
+
+        def _jsonable(value):
+            if isinstance(value, (bytes, memoryview)):
+                return base64.b64encode(bytes(value)).decode("ascii")
+            if isinstance(value, Decimal):
+                return float(value)
+            if isinstance(value, (_dt, _date)):
+                return value.isoformat()
+            return value
+
+        def table(name, order_by="id"):
+            rows = db.query(f"SELECT * FROM {name} ORDER BY {order_by}")
+            return [{k: _jsonable(v) for k, v in row.items()} for row in rows]
+
+        payload = {
+            "meta": {
+                "app": "stock",
+                "format": 1,
+                "created": _dt.now().isoformat(timespec="seconds"),
+                "tables": ["users", "products", "product_variants",
+                           "stock_in", "stock_out", "orders", "order_items"],
+                "note": "Product images are base64-encoded JPEG bytes.",
+            },
+            "users": table("users"),
+            "products": table("products"),
+            "product_variants": table("product_variants"),
+            "stock_in": table("stock_in"),
+            "stock_out": table("stock_out"),
+            "orders": table("orders"),
+            "order_items": table("order_items"),
+        }
+        body = _json.dumps(payload, ensure_ascii=False, indent=1)
+        filename = f"stock-backup-{date.today().isoformat()}.json"
+        return Response(
+            body,
+            mimetype="application/json",
+            headers={
+                "Content-Disposition": f"attachment; filename={filename}",
+            },
+        )
+
     # ---- CLI commands --------------------------------------------------
     @app.cli.command("init-db")
     def init_db_cmd():

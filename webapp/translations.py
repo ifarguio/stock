@@ -34,6 +34,7 @@ _STRINGS: dict[str, dict[str, str]] = {
 
         "menu.change_password": "Change password",
         "menu.manage_users": "Manage users",
+        "menu.backup": "Download backup",
         "menu.reset_db": "Reset all data",
 
         "profile.old_password": "Current password",
@@ -218,6 +219,7 @@ _STRINGS: dict[str, dict[str, str]] = {
 
         "menu.change_password": "修改密码",
         "menu.manage_users": "用户管理",
+        "menu.backup": "下载数据备份",
         "menu.reset_db": "清空所有数据",
 
         "profile.old_password": "当前密码",
