@@ -412,14 +412,20 @@ def unship_order(order_id: int) -> None:
 
 
 def delete_order(order_id: int) -> None:
-    """Delete a new (unshipped) order. Shipped orders are rejected."""
+    """Delete an order completely — new or shipped.
 
-    order = get_order(order_id)
-    if order and order["status"] == "shipped":
-        raise ValueError(
-            "Cannot delete a shipped order. The stock has already been reduced."
-        )
-    db.execute("DELETE FROM orders WHERE id = %s", (order_id,))
+    For shipped orders the matching ``stock_out`` rows are removed first
+    (returning the stock to inventory); the FK ``ON DELETE CASCADE`` would
+    also handle it, but deleting explicitly keeps the intent clear. Line
+    items cascade away with the order. Statistics are derived from orders,
+    so a deleted order disappears from all stats automatically.
+    """
+
+    with db.transaction() as cur:
+        # Only rows created at ship time (they carry the order_id link);
+        # manual stock-out entries are never touched.
+        cur.execute("DELETE FROM stock_out WHERE order_id = %s", (order_id,))
+        cur.execute("DELETE FROM orders WHERE id = %s", (order_id,))
 
 
 # ---------------------------------------------------------------------------
