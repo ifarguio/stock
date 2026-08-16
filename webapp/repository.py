@@ -441,8 +441,11 @@ def sales_summary(
         f"""
         SELECT COUNT(DISTINCT o.id) AS order_count,
                COALESCE(SUM(oi.quantity), 0) AS units,
-               COALESCE(SUM(oi.quantity * oi.unit_price), 0) AS revenue
-        FROM orders o JOIN order_items oi ON oi.order_id = o.id
+               COALESCE(SUM(oi.quantity * oi.unit_price), 0) AS revenue,
+               COALESCE(SUM(oi.quantity * (oi.unit_price - p.base_price)), 0) AS profit
+        FROM orders o
+        JOIN order_items oi ON oi.order_id = o.id
+        JOIN products p ON p.id = oi.product_id
         WHERE o.status = 'shipped' AND o.shipped_date BETWEEN %s AND %s
               {product_clause}
         """,
@@ -452,7 +455,8 @@ def sales_summary(
         f"""
         SELECT p.code, p.name,
                SUM(oi.quantity) AS units,
-               SUM(oi.quantity * oi.unit_price) AS revenue
+               SUM(oi.quantity * oi.unit_price) AS revenue,
+               SUM(oi.quantity * (oi.unit_price - p.base_price)) AS profit
         FROM orders o JOIN order_items oi ON oi.order_id = o.id
                       JOIN products p ON p.id = oi.product_id
         WHERE o.status = 'shipped' AND o.shipped_date BETWEEN %s AND %s
@@ -465,6 +469,7 @@ def sales_summary(
         "order_count": int(summary["order_count"] or 0),
         "units": int(summary["units"] or 0),
         "revenue": float(summary["revenue"] or 0.0),
+        "profit": float(summary["profit"] or 0.0),
         "top_products": top,
     }
 
@@ -485,8 +490,11 @@ def sales_timeseries(
         SELECT o.shipped_date AS d,
                COUNT(DISTINCT o.id) AS orders,
                COALESCE(SUM(oi.quantity), 0) AS units,
-               COALESCE(SUM(oi.quantity * oi.unit_price), 0) AS revenue
-        FROM orders o JOIN order_items oi ON oi.order_id = o.id
+               COALESCE(SUM(oi.quantity * oi.unit_price), 0) AS revenue,
+               COALESCE(SUM(oi.quantity * (oi.unit_price - p.base_price)), 0) AS profit
+        FROM orders o
+        JOIN order_items oi ON oi.order_id = o.id
+        JOIN products p ON p.id = oi.product_id
         WHERE o.status = 'shipped' AND o.shipped_date BETWEEN %s AND %s
               {product_clause}
         GROUP BY o.shipped_date ORDER BY o.shipped_date
@@ -497,10 +505,11 @@ def sales_timeseries(
     by_date: dict[str, dict[str, Any]] = {}
     for row in raw:
         d = row["d"].isoformat() if hasattr(row["d"], "isoformat") else str(row["d"])[:10]
-        by_date.setdefault(d, {"orders": 0, "units": 0, "revenue": 0.0})
+        by_date.setdefault(d, {"orders": 0, "units": 0, "revenue": 0.0, "profit": 0.0})
         by_date[d]["orders"] += int(row["orders"])
         by_date[d]["units"] += int(row["units"])
         by_date[d]["revenue"] += float(row["revenue"])
+        by_date[d]["profit"] += float(row["profit"])
 
     from datetime import date as _date, timedelta as _timedelta
     start = _date.fromisoformat(start_date)
@@ -518,11 +527,12 @@ def sales_timeseries(
         key = (cur.isoformat() if bucket == "day"
                else week_key(cur) if bucket == "week"
                else month_key(cur))
-        series.setdefault(key, {"bucket": key, "orders": 0, "units": 0, "revenue": 0.0})
+        series.setdefault(key, {"bucket": key, "orders": 0, "units": 0, "revenue": 0.0, "profit": 0.0})
         stats = by_date.get(cur.isoformat())
         if stats:
             series[key]["orders"] += stats["orders"]
             series[key]["units"] += stats["units"]
             series[key]["revenue"] += stats["revenue"]
+            series[key]["profit"] += stats["profit"]
         cur += _timedelta(days=1)
     return [series[k] for k in sorted(series.keys())]

@@ -90,7 +90,8 @@ function bindVariantRow(row) {
         input.value = '';
       }
     });
-    // Trigger once on load so an existing "__new__" selection reveals the input.
+    // Reveal the input right away when "__new__" is (or becomes) selected —
+    // including when it is the ONLY option (first product, empty catalog).
     if (sel.value === '__new__') {
       sel.parentElement.querySelector('.v-new').classList.remove('d-none');
     }
@@ -101,13 +102,16 @@ document.querySelectorAll('.variant-row').forEach(bindVariantRow);
 const COLORS = [{% for c in colors %}"{{ c }}",{% endfor %}];
 const SIZES = [{% for s in sizes %}"{{ s }}",{% endfor %}];
 
-function colorOptions(selected) {
-  return COLORS.map(c => `<option value="${c}" ${c===selected?'selected':''}>${c}</option>`).join('')
-    + `<option value="__new__">➕ {{ tr('sect.add_variant') }}…</option>`;
+function colorOptions() {
+  // When no colors exist yet, preselect "add new" so the text field shows.
+  const preselectNew = COLORS.length === 0;
+  return COLORS.map(c => `<option value="${c}">${c}</option>`).join('')
+    + `<option value="__new__" ${preselectNew ? 'selected' : ''}>➕ {{ tr('sect.add_variant') }}…</option>`;
 }
-function sizeOptions(selected) {
-  return SIZES.map(s => `<option value="${s}" ${s===selected?'selected':''}>${s}</option>`).join('')
-    + `<option value="__new__">➕ {{ tr('sect.add_variant') }}…</option>`;
+function sizeOptions() {
+  const preselectNew = SIZES.length === 0;
+  return SIZES.map(s => `<option value="${s}">${s}</option>`).join('')
+    + `<option value="__new__" ${preselectNew ? 'selected' : ''}>➕ {{ tr('sect.add_variant') }}…</option>`;
 }
 
 document.getElementById('add-variant').addEventListener('click', function() {
@@ -119,26 +123,18 @@ document.getElementById('add-variant').addEventListener('click', function() {
   row.className = 'row g-2 mb-2 variant-row';
   row.innerHTML = `
     <div class="col-5">
-      <select name="v_color" class="form-select form-select-sm v-color">${colorOptions(COLORS[0]||'')}</select>
+      <select name="v_color" class="form-select form-select-sm v-color">${colorOptions()}</select>
       <input type="text" name="v_color_new" class="form-control form-control-sm v-new d-none mt-1" placeholder="{{ tr('hint.color_new') }}">
     </div>
     <div class="col-5">
-      <select name="v_size" class="form-select form-select-sm v-size">${sizeOptions(SIZES[0]||'')}</select>
+      <select name="v_size" class="form-select form-select-sm v-size">${sizeOptions()}</select>
       <input type="text" name="v_size_new" class="form-control form-control-sm v-new d-none mt-1" placeholder="{{ tr('hint.size_new') }}">
     </div>
     <div class="col-2"><button type="button" class="btn btn-sm btn-outline-danger w-100" onclick="this.closest('.variant-row').remove()">{{ tr('btn.remove') }}</button></div>`;
   document.getElementById('variant-list').appendChild(row);
   bindVariantRow(row);
 });
-
-// Before submit: if a dropdown is "__new__", replace its value with the typed one.
-document.getElementById('product-form').addEventListener('submit', () => {
-  document.querySelectorAll('.variant-row').forEach(row => {
-    const cs = row.querySelector('.v-color');
-    if (cs.value === '__new__') cs.value = row.querySelector('input[name="v_color_new"]').value;
-    const ss = row.querySelector('.v-size');
-    if (ss.value === '__new__') ss.value = row.querySelector('input[name="v_size_new"]').value;
-  });
-});
+// Note: "__new__" resolution happens server-side in _save_product —
+// the v_color_new / v_size_new text fields submit alongside the selects.
 </script>
 {% endblock %}

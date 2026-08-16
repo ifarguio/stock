@@ -171,7 +171,9 @@ def create_app() -> Flask:
             password = request.form.get("password", "")
             row = get_user_by_username(username)
             if row and verify_password(row["password_hash"], password):
-                login_user(User(row["id"], row["username"], row.get("display_name") or ""))
+                login_user(User(row["id"], row["username"],
+                                row.get("display_name") or "",
+                                row.get("is_admin") or False))
                 next_url = request.args.get("next") or url_for("inventory")
                 return redirect(next_url)
             flash(translations.tr("login.bad"), "danger")
@@ -277,10 +279,27 @@ def create_app() -> Flask:
             flash(translations.tr("err.invalid_price"), "danger")
             return redirect(request.url)
 
-        # Variants: collected from repeated form fields.
+        # Variants: collected from repeated form fields. Each row submits a
+        # v_color/v_size select plus optional v_color_new/v_size_new text
+        # inputs (revealed when "add new" was chosen). Resolve server-side —
+        # never trust the literal "__new__" sentinel to reach the database.
         colors = request.form.getlist("v_color")
+        colors_new = request.form.getlist("v_color_new")
         sizes = request.form.getlist("v_size")
-        variants = [(c.strip(), s.strip()) for c, s in zip(colors, sizes)]
+        sizes_new = request.form.getlist("v_size_new")
+
+        def _resolve(values, news, i):
+            v = values[i].strip() if i < len(values) else ""
+            if v == "__new__":
+                v = news[i].strip() if i < len(news) else ""
+            return v
+
+        variants = []
+        for i in range(max(len(colors), len(sizes))):
+            c = _resolve(colors, colors_new, i)
+            s = _resolve(sizes, sizes_new, i)
+            if c or s:
+                variants.append((c, s))
         # Deduplicate preserving order.
         seen = set()
         unique = []
